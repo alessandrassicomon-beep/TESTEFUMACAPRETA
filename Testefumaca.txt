@@ -1,0 +1,1991 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Relatório de Monitoramento de Fumaça Preta - ICOMON</title>
+
+  <!-- Bootstrap 5 & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- jsPDF & html2canvas -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    :root {
+      --primary-color: #001B6E;
+      --primary-hover: #00134f;
+      --primary-light: #e8ecf8;
+      --success-color: #198754;
+      --danger-color: #dc3545;
+      --card-shadow: 0 10px 25px -5px rgba(0, 27, 110, 0.08), 0 8px 10px -6px rgba(0, 27, 110, 0.04);
+      --border-radius: 12px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f4f6fb;
+      color: #2d3748;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .app-header {
+      background: linear-gradient(135deg, var(--primary-color) 0%, #0a2988 100%);
+      color: #fff;
+      padding: 1rem 1.5rem;
+      box-shadow: 0 4px 15px rgba(0, 27, 110, 0.2);
+    }
+    .brand-logo {
+      font-weight: 800;
+      font-size: 1.6rem;
+      letter-spacing: 1.5px;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-badge {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 0.25rem 0.65rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .stepper-wrapper {
+      background: #ffffff;
+      border-radius: var(--border-radius);
+      box-shadow: var(--card-shadow);
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      overflow-x: auto;
+    }
+    .stepper {
+      display: flex;
+      justify-content: space-between;
+      min-width: 620px;
+    }
+    .step-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      position: relative;
+    }
+    .step-circle {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      color: #718096;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+      border: 2px solid #cbd5e1;
+    }
+    .step-item.active .step-circle {
+      background: var(--primary-color);
+      color: #ffffff;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 4px rgba(0, 27, 110, 0.2);
+    }
+    .step-item.completed .step-circle {
+      background: var(--success-color);
+      color: #ffffff;
+      border-color: var(--success-color);
+    }
+    .step-title {
+      font-size: 0.72rem;
+      font-weight: 600;
+      margin-top: 6px;
+      color: #718096;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .step-item.active .step-title {
+      color: var(--primary-color);
+      font-weight: 700;
+    }
+
+    .wizard-card {
+      background: #ffffff;
+      border-radius: var(--border-radius);
+      box-shadow: var(--card-shadow);
+      border: 1px solid #eef1f6;
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+    .card-header-custom {
+      background-color: #ffffff;
+      border-bottom: 1px solid #edf2f7;
+      padding: 1.25rem 1.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .card-header-custom h2 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .form-step {
+      display: none;
+      padding: 1.75rem;
+      animation: fadeIn 0.3s ease;
+    }
+    .form-step.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .form-label {
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: #374151;
+      margin-bottom: 0.4rem;
+    }
+    .form-control, .form-select {
+      border-radius: 8px;
+      border: 1.5px solid #d1d5db;
+      padding: 0.65rem 0.85rem;
+      font-size: 0.95rem;
+    }
+    .form-control:focus, .form-select:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(0, 27, 110, 0.15);
+    }
+    .is-invalid { border-color: var(--danger-color) !important; }
+
+    .vehicle-info-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 1.25rem;
+    }
+    .info-label {
+      font-size: 0.72rem;
+      color: #64748b;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .info-value {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: #1e293b;
+      word-break: break-word;
+    }
+
+    .choice-card {
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1.25rem;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      height: 100%;
+    }
+    .choice-card:hover {
+      border-color: #cbd5e1;
+      transform: translateY(-2px);
+    }
+    .choice-card.selected {
+      border-color: var(--primary-color);
+      background: var(--primary-light);
+    }
+    .choice-card .icon-box {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      background: #f1f5f9;
+      color: var(--primary-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+    .choice-card.selected .icon-box {
+      background: var(--primary-color);
+      color: #fff;
+    }
+
+    .result-banner {
+      border-radius: 10px;
+      padding: 1.2rem;
+      text-align: center;
+      font-weight: 700;
+      font-size: 1.15rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+    .result-conforme {
+      background-color: #d1e7dd;
+      color: #0f5132;
+      border: 2px solid #a3cfbb;
+    }
+    .result-nao-conforme {
+      background-color: #f8d7da;
+      color: #842029;
+      border: 2px solid #f5c2c7;
+    }
+
+    /* Caixa de fotos em proporção Retrato (Vertical / Celular) */
+    .photo-upload-box {
+      border: 2px dashed #cbd5e1;
+      border-radius: 12px;
+      padding: 1rem;
+      text-align: center;
+      background: #f8fafc;
+      cursor: pointer;
+      min-height: 280px;
+      aspect-ratio: 3/4;
+      max-width: 260px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .photo-upload-box:hover {
+      border-color: var(--primary-color);
+      background: #f1f5f9;
+    }
+    .photo-preview {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 8px;
+      display: none;
+    }
+
+    .canvas-container {
+      border: 2px dashed #94a3b8;
+      border-radius: 8px;
+      background: #fff;
+      touch-action: none;
+      position: relative;
+    }
+    #signaturePad {
+      width: 100%;
+      height: 180px;
+      display: block;
+      cursor: crosshair;
+    }
+
+    .btn-icomon {
+      background-color: var(--primary-color);
+      color: #ffffff;
+      font-weight: 600;
+      padding: 0.65rem 1.4rem;
+      border-radius: 8px;
+      border: none;
+    }
+    .btn-icomon:hover {
+      background-color: var(--primary-hover);
+      color: #fff;
+    }
+
+    /* =======================================================
+       ÁREA DO PDF OFICIAL (Diagramação A4 Perfeita)
+       ======================================================= */
+    #pdfRenderArea {
+      position: absolute;
+      left: -9999px;
+      top: 0;
+      width: 800px;
+      background: #ffffff;
+      color: #000;
+      padding: 24px 30px;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 11px;
+      line-height: 1.25;
+    }
+    #pdfRenderArea table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 8px;
+    }
+    #pdfRenderArea th, #pdfRenderArea td {
+      border: 1px solid #222;
+      padding: 4px 6px;
+      vertical-align: middle;
+    }
+    #pdfRenderArea .header-table th, #pdfRenderArea .header-table td {
+      padding: 6px;
+    }
+    #pdfRenderArea .table-section-title {
+      background: #001B6E;
+      color: #ffffff;
+      font-weight: bold;
+      padding: 4px 6px;
+      font-size: 11px;
+    }
+
+    /* Fotos em formato Retrato no PDF */
+    .pdf-photo-box {
+      width: 100%;
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fafafa;
+      border: 1px dashed #bbb;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    .pdf-photo-box img {
+      max-height: 195px;
+      max-width: 100%;
+      object-fit: contain;
+    }
+
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 27, 110, 0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      color: #fff;
+      flex-direction: column;
+      gap: 15px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Loading Overlay -->
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="spinner-border text-light" style="width: 3rem; height: 3rem;" role="status"></div>
+    <h5 class="fw-bold mb-0">Gerando Relatório Técnico Oficial...</h5>
+    <p class="small text-white-50">Compilando evidências e gerando o arquivo PDF.</p>
+  </div>
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="container-fluid d-flex justify-content-between align-items-center">
+      <div class="brand-logo">
+        <i class="bi bi-shield-check"></i>
+        <span>ICOMON</span>
+      </div>
+      <div class="text-end">
+        <span class="brand-badge d-none d-sm-inline-block">SGI - GESTÃO AMBIENTAL</span>
+        <div class="small text-white-50 mt-1" style="font-size: 0.75rem;">F-SGI-50 | Rev.02</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Container -->
+  <main class="container my-3 my-md-4 flex-grow-1">
+    
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3">
+      <div>
+        <h1 class="h4 fw-bold mb-1" style="color: var(--primary-color);">
+          Relatório de Monitoramento de Fumaça Preta
+        </h1>
+        <p class="text-muted small mb-0">Inspeção ambiental através da Escala Ringelmann em campo.</p>
+      </div>
+      <div class="mt-2 mt-md-0 d-flex gap-2">
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="resetFormConfirmation()">
+          <i class="bi bi-arrow-counterclockwise"></i> Limpar Formulário
+        </button>
+      </div>
+    </div>
+
+    <!-- Stepper -->
+    <div class="stepper-wrapper">
+      <div class="stepper" id="stepper">
+        <div class="step-item active" data-step="1">
+          <div class="step-circle">1</div>
+          <div class="step-title">Equipamento</div>
+        </div>
+        <div class="step-item" data-step="2">
+          <div class="step-circle">2</div>
+          <div class="step-title">Dados</div>
+        </div>
+        <div class="step-item" data-step="3">
+          <div class="step-circle">3</div>
+          <div class="step-title">Ensaio</div>
+        </div>
+        <div class="step-item" data-step="4">
+          <div class="step-circle">4</div>
+          <div class="step-title">Resultado</div>
+        </div>
+        <div class="step-item" data-step="5">
+          <div class="step-circle">5</div>
+          <div class="step-title">Observações</div>
+        </div>
+        <div class="step-item" data-step="6">
+          <div class="step-circle">6</div>
+          <div class="step-title">Evidências</div>
+        </div>
+        <div class="step-item" data-step="7">
+          <div class="step-circle">7</div>
+          <div class="step-title">Responsável</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Wizard Form -->
+    <div class="wizard-card">
+      <form id="inspectionForm" novalidate onsubmit="return false;">
+
+        <!-- ETAPA 1 -->
+        <div class="form-step active" id="step-1">
+          <div class="card-header-custom px-0 pt-0">
+            <h2><i class="bi bi-gear-wide-connected"></i> Etapa 1: Identificação do Equipamento</h2>
+            <span class="badge bg-primary">Início</span>
+          </div>
+          
+          <div class="mt-3">
+            <label class="form-label mb-3 d-block fw-bold fs-6">
+              Selecione o Tipo de Equipamento Inspecionado: <span class="text-danger">*</span>
+            </label>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="choice-card" id="card-tipo-veiculo" onclick="selectTipoEquipamento('Veículo à Diesel')">
+                  <div class="icon-box">
+                    <i class="bi bi-truck"></i>
+                  </div>
+                  <div>
+                    <h5 class="fw-bold mb-1">Veículo à Diesel</h5>
+                    <p class="text-muted small mb-0">Caminhões, Vans, Pick-ups, Muncks e Veículos Operacionais.</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="choice-card" id="card-tipo-gerador" onclick="selectTipoEquipamento('Grupo Motor Gerador')">
+                  <div class="icon-box">
+                    <i class="bi bi-lightning-charge"></i>
+                  </div>
+                  <div>
+                    <h5 class="fw-bold mb-1">Grupo Motor Gerador</h5>
+                    <p class="text-muted small mb-0">Geradores estacionários e móveis a diesel.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <input type="hidden" id="tipoEquipamento" name="tipoEquipamento" required>
+            <div class="invalid-feedback d-block mt-2" id="tipoEquipamentoError" style="display:none !important;">
+              Por favor, selecione uma das opções acima para continuar.
+            </div>
+          </div>
+        </div>
+
+        <!-- ETAPA 2A: VEÍCULO -->
+        <div class="form-step" id="step-2A">
+          <div class="card-header-custom px-0 pt-0">
+            <h2><i class="bi bi-truck-flatbed"></i> Etapa 2: Dados do Veículo à Diesel</h2>
+            <span class="badge bg-secondary">Frota ICOMON</span>
+          </div>
+
+          <div class="mt-3">
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="placaSearchInput" class="form-label fw-bold">
+                  Buscar Placa do Veículo: <span class="text-danger">*</span>
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                  <input type="text" class="form-control text-uppercase" id="placaSearchInput" list="placasDatalist" placeholder="Digite a placa (Ex: SDT3J54)..." autocomplete="off" oninput="onPlacaSelected(this.value)">
+                  <datalist id="placasDatalist"></datalist>
+                </div>
+                <div class="form-text">Digite para filtrar pela base integrada da empresa.</div>
+                <div class="invalid-feedback" id="placaError">Selecione uma placa válida da base.</div>
+              </div>
+              <div class="col-md-6 d-flex align-items-end mt-2 mt-md-0">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearVehicleData()">
+                  <i class="bi bi-x-circle"></i> Limpar Seleção
+                </button>
+              </div>
+            </div>
+
+            <!-- Card Informativo (Sem o campo confuso de retirada) -->
+            <div class="vehicle-info-box mt-3" id="vehicleInfoContainer" style="display: none;">
+              <div class="d-flex align-items-center justify-content-between border-bottom pb-2 mb-3">
+                <div class="d-flex align-items-center gap-2">
+                  <span class="badge bg-primary fs-6 px-3 py-2" id="vBadgePlaca">PLACA</span>
+                  <span class="badge bg-success" id="vBadgeStatus">Status</span>
+                </div>
+                <span class="text-muted small"><i class="bi bi-check-circle-fill text-success"></i> Veículo localizado</span>
+              </div>
+
+              <div class="row g-3">
+                <div class="col-6 col-md-4">
+                  <div class="info-label">Base / Local Operacional</div>
+                  <div class="info-value text-primary" id="vInfoDepartamento">-</div>
+                </div>
+                <div class="col-6 col-md-4">
+                  <div class="info-label">Modelo</div>
+                  <div class="info-value" id="vInfoModelo">-</div>
+                </div>
+                <div class="col-6 col-md-4">
+                  <div class="info-label">Ano/Mod</div>
+                  <div class="info-value" id="vInfoMod">-</div>
+                </div>
+
+                <div class="col-6 col-md-4">
+                  <div class="info-label">Proprietário</div>
+                  <div class="info-value" id="vInfoProprietario">-</div>
+                </div>
+                <div class="col-6 col-md-4">
+                  <div class="info-label">Centro de Custo</div>
+                  <div class="info-value" id="vInfoCentroCusto">-</div>
+                </div>
+                <div class="col-6 col-md-4">
+                  <div class="info-label">RE do Condutor</div>
+                  <div class="info-value" id="vInfoRE">-</div>
+                </div>
+
+                <div class="col-12">
+                  <div class="info-label">Condutor Responsável</div>
+                  <div class="info-value text-dark" id="vInfoCondutor">-</div>
+                </div>
+              </div>
+            </div>
+
+            <div id="noVehicleSelectedMsg" class="alert alert-light border text-center py-4 text-muted">
+              <i class="bi bi-info-circle fs-3 d-block mb-1 text-primary"></i>
+              Selecione uma placa no campo acima para carregar automaticamente todos os dados técnicos.
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ETAPA 2B: GERADOR -->
+        <div class="form-step" id="step-2B">
+          <div class="card-header-custom px-0 pt-0">
+            <h2><i class="bi bi-lightning-charge-fill"></i> Etapa 2: Dados do Grupo Motor Gerador</h2>
+            <span class="badge bg-secondary">Gerador</span>
+          </div>
+
+          <div class="row g-3 mt-2">
+            <div class="col-md-6">
+              <label for="geradorLocal" class="form-label">Local / Base: <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="geradorLocal" placeholder="Ex: Base Vila Guilherme">
+              <div class="invalid-feedback">Informe o local ou base.</div>
+            </div>
+            <div class="col-md-6">
+              <label for="geradorSetor" class="form-label">Setor: <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="geradorSetor" placeholder="Ex: Operações / Subestação">
+              <div class="invalid-feedback">Informe o setor.</div>
+            </div>
+            <div class="col-md-6">
+              <label for="geradorFabricante" class="form-label">Fabricante: <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="geradorFabricante" placeholder="Ex: Cummins, Stemac, MWM">
+              <div class="invalid-feedback">Informe o fabricante.</div>
+            </div>
+            <div class="col-md-6">
+              <label for="geradorModelo" class="form-label">Modelo: <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="geradorModelo" placeholder="Ex: C150 D5">
+              <div class="invalid-feedback">Informe o modelo.</div>
+            </div>
+            <div class="col-md-4">
+              <label for="geradorSerie" class="form-label">Nº de Série: <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="geradorSerie" placeholder="Ex: BR-109283-2022">
+              <div class="invalid-feedback">Informe o número de série.</div>
+            </div>
+            <div class="col-md-4">
+              <label for="geradorPotencia" class="form-label">Potência: <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="geradorPotencia" placeholder="Ex: 150 kVA">
+              <div class="invalid-feedback">Informe a potência.</div>
+            </div>
+            <div class="col-md-4">
+              <label for="geradorDataFab" class="form-label">Data de Fabricação: <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" id="geradorDataFab">
+              <div class="invalid-feedback">Informe a data de fabricação.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ETAPA 3: EXECUÇÃO DO ENSAIO -->
+        <div class="form-step" id="step-3">
+          <div class="card-header-custom px-0 pt-0">
+            <h2><i class="bi bi-speedometer2"></i> Etapa 3: Execução do Ensaio Ringelmann</h2>
+            <span class="badge bg-primary">Parâmetros</span>
+          </div>
+
+          <div class="alert alert-info py-2 px-3 small mt-3">
+            <i class="bi bi-info-circle-fill me-1"></i>
+            <strong>Critério F-SGI-50:</strong> 
+            Veículos à Diesel: Máximo Padrão 2 | Grupos Motores Geradores: Máximo Padrão 1.
+          </div>
+
+          <div class="row g-3 mt-1">
+            <div class="col-md-6 col-lg-3">
+              <label for="ensaioData" class="form-label">Data da Inspeção: <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" id="ensaioData" required>
+              <div class="invalid-feedback">Selecione a data da inspeção.</div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+              <label for="ensaioHora" class="form-label">Horário da Leitura: <span class="text-danger">*</span></label>
+              <input type="time" class="form-control" id="ensaioHora" required>
+              <div class="invalid-feedback">Informe o horário.</div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+              <label for="ensaioDistancia" class="form-label">Distância (metros): <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <input type="number" class="form-control" id="ensaioDistancia" min="1" step="0.5" placeholder="Ex: 20" required>
+                <span class="input-group-text">m</span>
+              </div>
+              <div class="form-text small">Mínimo recomendado: 20 metros.</div>
+              <div class="invalid-feedback">Informe a distância da leitura.</div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+              <label for="ensaioOperacaoNormal" class="form-label">Motor em Operação Normal? <span class="text-danger">*</span></label>
+              <select class="form-select" id="ensaioOperacaoNormal" required>
+                <option value="">Selecione...</option>
+                <option value="Sim">Sim</option>
+                <option value="Não">Não</option>
+              </select>
+              <div class="invalid-feedback">Campo obrigatório.</div>
+            </div>
+
+            <!-- Densidade Observada -->
+            <div class="col-12 mt-4">
+              <label for="ensaioDensidade" class="form-label fw-bold fs-6">
+                Densidade Observada (Escala Ringelmann): <span class="text-danger">*</span>
+              </label>
+              <select class="form-select form-select-lg" id="ensaioDensidade" required onchange="calcularResultado()">
+                <option value="">Selecione o padrão observado...</option>
+                <option value="Padrão 1">Padrão 1 (20% de enegrecimento)</option>
+                <option value="Padrão 2">Padrão 2 (40% de enegrecimento)</option>
+                <option value="Padrão 3">Padrão 3 (60% de enegrecimento)</option>
+                <option value="Padrão 4">Padrão 4 (80% de enegrecimento)</option>
+                <option value="Padrão 5">Padrão 5 (100% de enegrecimento)</option>
+              </select>
+              <div class="invalid-feedback">Selecione o padrão de fumaça.</div>
+            </div>
+
+            <div class="col-12 mt-3" id="liveResultBox" style="display: none;">
+              <div class="result-banner" id="liveResultBanner">
+                <i class="bi" id="liveResultIcon"></i>
+                <span id="liveResultText">CONFORME</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ETAPA 4A: CONFORME -->
+        <div class="form-step" id="step-4A">
+          <div class="card-header-custom px-0 pt-0">
+            <h2><i class="bi bi-check-circle-fill text-success"></i> Etapa 4: Resultado da Avaliação</h2>
+            <span class="badge bg-success">Conforme</span>
+          </div>
+
+          <div class="text-center py-5">
+            <i class="bi bi-check-circle text-success" style="font-size: 4rem;"></i>
+            <h3 class="fw-bold text-success mt-2">EQUIPAMENTO CONFORME</h3>
+            <p class="fs-5 text-muted max-w-600 mx-auto mt-2">
+              Equipamento dentro dos limites permitidos pela Escala Ringelmann.
+            </p>
+            <div class="alert alert-light border d-inline-block px-4 py-2 mt-2">
+              <span class="text-secondary small">Critério legal e de qualidade atingido. Prossiga para as observações.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ETAPA 4B: NÃO CONFORMIDADE -->
+        <div class="form-step" id="step-4B">
+          <div class="card-header-custom px-0 pt-0">
+            <h2><i class="bi bi-exclamation-triangle-fill text-danger"></i> Etapa 4: Tratativa de Não Conformidade</h2>
+            <span class="badge bg-danger">Não Conforme</span>
+          </div>
+
+          <div class="alert alert-danger d-flex align-items-center mt-3" role="alert">
+            <i class="bi bi-exclamation-octagon-fill fs-3 me-3"></i>
+            <div>
+              <strong>Equipamento Não Conforme!</strong> A densidade observada excedeu o limite tolerado.
+              O preenchimento do plano corretivo abaixo é obrigatório.
+            </div>
+          </div>
+
+          <div class="row g-3 mt-2">
+            <div class="col-12">
+              <label for="ncDescricao" class="form-label">Descrição da Não Conformidade: <span class="text-danger">*</span></label>
+              <textarea class="form-control" id="ncDescricao" rows="3" placeholder="Descreva a emissão constatada, saturação, ruídos ou anomalias observadas."></textarea>
+              <div class="invalid-feedback">Informe a descrição da não conformidade.</div>
+            </div>
+            <div class="col-12">
+              <label for="ncAcaoCorretiva" class="form-label">Ação Corretiva: <span class="text-danger">*</span></label>
+              <textarea class="form-control" id="ncAcaoCorretiva" rows="3" placeholder="Ex: Encaminhamento imediato para regulagem mecânica, limpeza/troca de filtros e bicos injetores."></textarea>
+              <div class="invalid-feedback">Informe a ação corretiva.</div>
+            </div>
+            <div class="col-md-6">
+              <label for="ncResponsavel" class="form-label">Responsável pela Ação: <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="ncResponsavel" placeholder="Ex: Gestão de Frota / Oficina">
+              <div class="invalid-feedback">Informe o responsável pela ação.</div>
+            </div>
+            <div class="col-md-6">
+              <label for="ncPrazo" class="form-label">Prazo da Correção: <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" id="ncPrazo">
+              <div class="invalid-feedback">Informe o prazo limite.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ETAPA 5: OBSERVAÇÕES -->
+        <div class="form-step" id="step-5">
+          <div class="card-header-custom px-0 pt-0">
+            <h2><i class="bi bi-chat-left-text"></i> Etapa 5: Observações Gerais</h2>
+            <span class="badge bg-secondary">Anotações</span>
+          </div>
+
+          <div class="mt-3">
+            <label for="observacoesGerais" class="form-label">
+              Observações Técnicas do Monitoramento:
+            </label>
+            <textarea class="form-control" id="observacoesGerais" rows="8" placeholder="Insira apontamentos adicionais (condições climáticas, vento, iluminação natural, histórico de manutenções ou particularidades da operação)..."></textarea>
+            <div class="form-text">Campo de texto livre opcional.</div>
+          </div>
+        </div>
+
+        <!-- ETAPA 6: FOTOS EM FORMATO RETRATO -->
+        <div class="form-step" id="step-6">
+          <div class="card-header-custom px-0 pt-0">
+            <h2><i class="bi bi-camera"></i> Etapa 6: Evidências Fotográficas (Retrato)</h2>
+            <span class="badge bg-primary">Fotos Celular</span>
+          </div>
+
+          <p class="text-muted small mt-2">
+            Insira os registros fotográficos verticais capturados via smartphone contendo identificação e medição.
+          </p>
+
+          <div class="row g-4 mt-1 justify-content-center">
+            <!-- FOTO 1 -->
+            <div class="col-md-6 col-lg-5">
+              <div class="card h-100 border text-center">
+                <div class="card-header bg-light fw-bold py-2">
+                  <i class="bi bi-phone me-1"></i> FOTO 1: Identificação / Placa
+                </div>
+                <div class="card-body d-flex flex-column align-items-center justify-content-between p-3">
+                  <p class="small text-muted mb-2">Placa do caminhão ou plaqueta de identificação.</p>
+                  
+                  <div class="photo-upload-box mb-2" id="boxFoto1" onclick="document.getElementById('inputFoto1').click()">
+                    <i class="bi bi-camera text-primary fs-1 mb-2" id="iconUpload1"></i>
+                    <span class="small text-muted" id="textUpload1">Toque para tirar foto ou carregar (Vertical)</span>
+                    <img id="previewFoto1" class="photo-preview" alt="Foto 1">
+                  </div>
+
+                  <input type="file" id="inputFoto1" accept="image/*" capture="environment" style="display: none;" onchange="handlePhotoUpload(this, 'previewFoto1', 'boxFoto1', 'iconUpload1', 'textUpload1', 'btnRemoverFoto1')">
+
+                  <button type="button" class="btn btn-outline-danger btn-sm w-100 mt-2" id="btnRemoverFoto1" style="display: none; max-width: 260px;" onclick="removePhoto('inputFoto1', 'previewFoto1', 'boxFoto1', 'iconUpload1', 'textUpload1', 'btnRemoverFoto1')">
+                    <i class="bi bi-trash"></i> Remover Foto 1
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- FOTO 2 -->
+            <div class="col-md-6 col-lg-5">
+              <div class="card h-100 border text-center">
+                <div class="card-header bg-light fw-bold py-2">
+                  <i class="bi bi-phone me-1"></i> FOTO 2: Escala Ringelmann
+                </div>
+                <div class="card-body d-flex flex-column align-items-center justify-content-between p-3">
+                  <p class="small text-muted mb-2">Escala juntamente com o equipamento (mín. 20m).</p>
+                  
+                  <div class="photo-upload-box mb-2" id="boxFoto2" onclick="document.getElementById('inputFoto2').click()">
+                    <i class="bi bi-camera text-primary fs-1 mb-2" id="iconUpload2"></i>
+                    <span class="small text-muted" id="textUpload2">Toque para tirar foto ou carregar (Vertical)</span>
+                    <img id="previewFoto2" class="photo-preview" alt="Foto 2">
+                  </div>
+
+                  <input type="file" id="inputFoto2" accept="image/*" capture="environment" style="display: none;" onchange="handlePhotoUpload(this, 'previewFoto2', 'boxFoto2', 'iconUpload2', 'textUpload2', 'btnRemoverFoto2')">
+
+                  <button type="button" class="btn btn-outline-danger btn-sm w-100 mt-2" id="btnRemoverFoto2" style="display: none; max-width: 260px;" onclick="removePhoto('inputFoto2', 'previewFoto2', 'boxFoto2', 'iconUpload2', 'textUpload2', 'btnRemoverFoto2')">
+                    <i class="bi bi-trash"></i> Remover Foto 2
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ETAPA 7: RESPONSÁVEL -->
+        <div class="form-step" id="step-7">
+          <div class="card-header-custom px-0 pt-0">
+            <h2><i class="bi bi-person-badge"></i> Etapa 7: Responsável pelo Monitoramento</h2>
+            <span class="badge bg-primary">Finalização</span>
+          </div>
+
+          <div class="row g-3 mt-2">
+            <div class="col-md-8">
+              <label for="respNome" class="form-label">Nome Completo do Responsável: <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="respNome" placeholder="Ex: Carlos Eduardo de Oliveira" required>
+              <div class="invalid-feedback">Informe o nome do responsável.</div>
+            </div>
+            <div class="col-md-4">
+              <label for="respRE" class="form-label">RE do Responsável: <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="respRE" placeholder="Ex: 045120" required>
+              <div class="invalid-feedback">Informe o RE.</div>
+            </div>
+
+            <!-- Assinatura Digital Canvas -->
+            <div class="col-12 mt-4">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label class="form-label fw-bold mb-0">
+                  Assinatura Digital do Responsável: <span class="text-danger">*</span>
+                </label>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearSignature()">
+                  <i class="bi bi-eraser"></i> Limpar Assinatura
+                </button>
+              </div>
+              <div class="canvas-container">
+                <canvas id="signaturePad"></canvas>
+              </div>
+              <div class="form-text small">Assine acima utilizando o dedo, caneta touch ou mouse.</div>
+              <div class="invalid-feedback d-block" id="sigError" style="display: none !important;">
+                A assinatura do responsável é obrigatória.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botões de Ação do Wizard -->
+        <div class="border-top p-3 bg-light d-flex flex-wrap justify-content-between align-items-center gap-2">
+          <div>
+            <button type="button" class="btn btn-secondary" id="btnVoltar" onclick="prevStep()">
+              <i class="bi bi-chevron-left"></i> Voltar
+            </button>
+          </div>
+          
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-icomon" id="btnAvancar" onclick="nextStep()">
+              Avançar <i class="bi bi-chevron-right"></i>
+            </button>
+            <button type="button" class="btn btn-outline-primary" id="btnImprimir" style="display: none;" onclick="imprimirRelatorio()">
+              <i class="bi bi-printer"></i> Imprimir
+            </button>
+            <button type="button" class="btn btn-success" id="btnGerarPDF" style="display: none;" onclick="gerarPDF()">
+              <i class="bi bi-file-earmark-pdf"></i> Gerar PDF
+            </button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </main>
+
+  <!-- ===================================================================
+       DOCUMENTO OFICIAL PARA EXPORTAÇÃO PDF (F-SGI-50 Rev.02)
+       =================================================================== -->
+  <div id="pdfRenderArea">
+    <!-- Cabeçalho Oficial: Apenas ICOMON (Sem "Tecnologia") -->
+    <table class="header-table">
+      <tr>
+        <td style="width: 25%; text-align: center; vertical-align: middle;">
+          <div style="font-size: 26px; font-weight: 900; color: #001B6E; letter-spacing: 2px; font-family: 'Arial Black', Arial, sans-serif;">ICOMON</div>
+        </td>
+        <td style="width: 53%; text-align: center; vertical-align: middle;">
+          <div style="font-size: 13px; font-weight: bold; text-transform: uppercase;">
+            Relatório de Monitoramento de Fumaça Preta
+          </div>
+          <div style="font-size: 10px; margin-top: 4px;">
+            <span id="pdfCheckVeiculo">( &nbsp; ) Veículos à Diesel</span> &nbsp;&nbsp;&nbsp;&nbsp;
+            <span id="pdfCheckGerador">( &nbsp; ) Grupos Motores Geradores</span>
+          </div>
+        </td>
+        <td style="width: 22%; text-align: center; vertical-align: middle; font-size: 10px;">
+          <strong>F-SGI-50</strong><br>
+          Rev.02
+        </td>
+      </tr>
+    </table>
+
+    <!-- Veículo: Tabela Limpa, sem caixa de data de retirada -->
+    <div id="pdfBlocoVeiculo">
+      <table>
+        <tr>
+          <td colspan="4" class="table-section-title">DADOS DO VEÍCULO</td>
+        </tr>
+        <tr>
+          <td style="width: 35%;"><strong>Local / Base:</strong> <span id="pdfVBase">-</span></td>
+          <td style="width: 25%;"><strong>Placas:</strong> <span id="pdfVPlaca">-</span></td>
+          <td style="width: 20%;"><strong>Ano Fab/Mod:</strong> <span id="pdfVMod">-</span></td>
+          <td style="width: 20%;"><strong>C. Custo:</strong> <span id="pdfVCentroCusto">-</span></td>
+        </tr>
+        <tr>
+          <td colspan="2"><strong>Modelo:</strong> <span id="pdfVModelo">-</span></td>
+          <td colspan="2"><strong>Proprietário:</strong> <span id="pdfVProprietario">-</span></td>
+        </tr>
+        <tr>
+          <td colspan="4">
+            <strong>Nome do Condutor:</strong> <span id="pdfVCondutor">-</span> 
+            &nbsp;|&nbsp; <strong>RE:</strong> <span id="pdfVRE">-</span>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Gerador -->
+    <div id="pdfBlocoGerador" style="display: none;">
+      <table>
+        <tr>
+          <td colspan="4" class="table-section-title">DADOS - GRUPOS MOTORES GERADORES</td>
+        </tr>
+        <tr>
+          <td colspan="2"><strong>Local / Base:</strong> <span id="pdfGLocal">-</span></td>
+          <td colspan="2"><strong>Setor:</strong> <span id="pdfGSetor">-</span></td>
+        </tr>
+        <tr>
+          <td style="width: 35%;"><strong>Fabricante / Modelo:</strong> <span id="pdfGFabModelo">-</span></td>
+          <td style="width: 25%;"><strong>Nº Série:</strong> <span id="pdfGSerie">-</span></td>
+          <td style="width: 20%;"><strong>Potência:</strong> <span id="pdfGPotencia">-</span></td>
+          <td style="width: 20%;"><strong>Data de Fabricação:</strong> <span id="pdfGDataFab">-</span></td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Ensaio Ringelmann -->
+    <table>
+      <tr>
+        <td colspan="4" class="table-section-title">
+          EXECUÇÃO DO ENSAIO ATRAVÉS DA ESCALA DE RINGELMANN
+        </td>
+      </tr>
+      <tr>
+        <td style="width: 25%;"><strong>Data:</strong> <span id="pdfEnsaioData">__/__/____</span></td>
+        <td style="width: 25%;"><strong>Horário da Leitura:</strong> <span id="pdfEnsaioHora">__:__</span></td>
+        <td style="width: 25%;"><strong>Distância do veículo:</strong> <span id="pdfEnsaioDistancia">-</span></td>
+        <td style="width: 25%;"><strong>Motor em operação normal:</strong> <span id="pdfEnsaioOpNormal">-</span></td>
+      </tr>
+      <tr>
+        <td colspan="4">
+          <strong>Densidade observada:</strong> <span id="pdfEnsaioDensidade" style="font-weight: bold; font-size: 12px;">-</span>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Análise de Resultados -->
+    <table>
+      <tr>
+        <td colspan="2" class="table-section-title">ANÁLISE DOS RESULTADOS</td>
+      </tr>
+      <tr>
+        <td colspan="2" style="font-size: 9.5px; line-height: 1.2;">
+          • <strong>Veículos à Diesel:</strong> Não exceder ao padrão nº 2 na Escala Ringelmann.<br>
+          • <strong>Grupos Motores Geradores:</strong> O grau de enegrecimento não poderá exceder o padrão nº 1 na Escala de Ringelmann.<br>
+          • <strong>Resultados:</strong> Os valores que estiverem acima do limite previsto deverão ser tratados como Não-conformidades / ações corretivas.
+        </td>
+      </tr>
+      <tr>
+        <td style="width: 45%; vertical-align: middle;">
+          <strong>Resultado:</strong>
+          <span id="pdfResultadoStatus" style="display: inline-block; padding: 3px 8px; font-weight: bold; border-radius: 4px;">CONFORME</span>
+        </td>
+        <td style="width: 55%;">
+          <div id="pdfTratativaNCBox" style="display: none; font-size: 9.5px;">
+            <strong>Ação Corretiva:</strong> <span id="pdfNCAcao">-</span><br>
+            <strong>Responsável:</strong> <span id="pdfNCResp">-</span> | <strong>Prazo:</strong> <span id="pdfNCPrazo">-</span>
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Observações -->
+    <table>
+      <tr>
+        <td class="table-section-title">OBSERVAÇÕES</td>
+      </tr>
+      <tr>
+        <td style="min-height: 38px; height: 38px; font-size: 10px;" id="pdfObservacoes">-</td>
+      </tr>
+    </table>
+
+    <!-- Fotos Verticais (Retrato de Celular) -->
+    <table>
+      <tr>
+        <td colspan="2" class="table-section-title" style="text-align: center;">EVIDÊNCIAS FOTOGRÁFICAS (COM TIME STAMP)</td>
+      </tr>
+      <tr>
+        <td style="width: 50%; text-align: center; vertical-align: top; padding: 6px;">
+          <div style="font-weight: bold; font-size: 9.5px; margin-bottom: 3px;">
+            FOTO 1: PLACA DO CAMINHÃO / EQUIPAMENTO
+          </div>
+          <div class="pdf-photo-box">
+            <img id="pdfImgFoto1" style="display: none;">
+            <span id="pdfNoImg1" style="color: #999; font-size: 9px;">Nenhuma foto anexada</span>
+          </div>
+        </td>
+        <td style="width: 50%; text-align: center; vertical-align: top; padding: 6px;">
+          <div style="font-weight: bold; font-size: 9.5px; margin-bottom: 3px;">
+            FOTO 2: ESCALA E CAMINHÃO (DISTÂNCIA MÍNIMA DE 20 METROS)
+          </div>
+          <div class="pdf-photo-box">
+            <img id="pdfImgFoto2" style="display: none;">
+            <span id="pdfNoImg2" style="color: #999; font-size: 9px;">Nenhuma foto anexada</span>
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Assinatura Posicionada Bem Embaixo -->
+    <div style="margin-top: 25px; text-align: center;">
+      <div style="display: inline-block; text-align: center;">
+        <img id="pdfImgAssinatura" style="height: 48px; max-width: 240px; display: none; margin: 0 auto 3px auto;">
+        <div style="width: 340px; border-top: 1.5px solid #000; margin: 0 auto; padding-top: 4px;">
+          <strong id="pdfRespNomeAssinatura" style="font-size: 10.5px;">NOME DO RESPONSÁVEL</strong><br>
+          <span style="font-size: 9px; color: #333;">RESPONSÁVEL PELO MONITORAMENTO (RE: <span id="pdfRespREAssinatura">------</span>)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ===================================================================
+       CÓDIGO JAVASCRIPT PRINCIPAL
+       =================================================================== -->
+  <script>
+    /* BASE COMPLETA DE VEÍCULOS FORNECIDA */
+    const RAW_DATA_TSV = `SDT3J54	LM TRANSPORTES	2022	BASE AMAPA	105007-5704 	Em Uso	Hilux	ALGUSTO GONCALVES DOS SANTOS	046220	17/06/2024  15:01
+SDT3J45	LM TRANSPORTES	2022	BASE AMAPA	105007-5704 	Em Uso	Hilux	ITAMI DOS REIS OLIVEIRA	046169	03/01/2023  10:00
+FYR9A81	LM TRANSPORTES	2023	BASE ANANINDEUA	105007-5711	Em Uso	VW Express c/ Carroceria	HERLON CHARLES SILVA COELHO	052886	07/10/2025  10:31
+FPL4H63	LM TRANSPORTES	2023	BASE ANANINDEUA	105007-5701	Disponível	VW Express c/ Carroceria	DISPONIVEL - PA	DPA	16/04/2026  08:03
+UDS0G51	SULFRIO	2026	BASE ANANINDEUA	105000-5006	Em Uso	UK2500	JOAO MARCOS DA SILVA DUTRA	058237	13/11/2025  08:40
+SYG7C96	LM TRANSPORTES	2024	BASE ANANINDEUA	101015-1515	Em Uso	Toro	JOSE NAUDO SILVA DOS SANTOS	028962	28/07/2025  08:01
+FWE4B71	LM TRANSPORTES	2023	BASE ANANINDEUA	199901-1906	Disponível	VW Express c/ Carroceria	DISPONIVEL - PA	DPA	05/08/2026  10:01
+GGU9C94	LM TRANSPORTES	2023	BASE ANANINDEUA	105007-5701	Em Uso	VW Express c/ Carroceria	PAULO ROBERTO SILVA DA PURIFICACAO JUNIOR	044414	22/06/2026  10:01
+SEP4D78	LM TRANSPORTES	2023	BASE ANANINDEUA	105007-5701	Disponível	VW Express c/ Carroceria	DISPONIVEL - PA	DPA	25/03/2026  10:03
+SEP4D79	LM TRANSPORTES	2023	BASE ANANINDEUA	105007-5711	Em Uso	VW Express c/ Carroceria	JADER ALBERTO DIAS MIRANDA	054938	01/10/2025  11:31
+SKI3D07	LM TRANSPORTES	2024	BASE BAHIA	101012-1211	Em Uso	Ranger	LUCIANO CIRINO DE ASSIS	025421	25/11/2024  14:02
+SKI6F09	LM TRANSPORTES	2024	BASE BAHIA	101012-1211	Em Uso	Ranger	JONAS JOSE GOMES DE SA	033674	20/02/2026  12:41
+RVD1F12	LM (O&M)	2023	BASE BAHIA	101012-1211	Em Uso	S10	LUCAS NUNES PEREIRA	042471	28/08/2026  22:07
+RMN2I79	LM (O&M)	2021	BASE BAHIA	101012-1211	Em Uso	Hilux	MANOEL DOS SANTOS BRAGA	039631	21/08/2026  14:09
+SKI2F33	LM TRANSPORTES	2024	BASE BAHIA	101012-1211	Em Uso	Ranger	AVILMAR DE JESUS RAMOS	030853	07/05/2026  10:21
+JRO3849	PARTICULAR	2008	BASE BAHIA	101012-1211	Em Uso	L200	JOSE OSORIO DE VASCONCELOS NETO	036855	29/04/2024  00:00
+SKI5B18	LM TRANSPORTES	2024	BASE BAHIA	101012-1211	Em Uso	Ranger	LUCAS NUNES PEREIRA	042471	04/03/2026  09:33
+SKI1B87	LM TRANSPORTES	2024	BASE BAHIA	101012-1211	Em Uso	Ranger	MATEUS DA SILVA BARRETO QUEIROZ	028498	21/11/2024  13:24
+QTY6E96	PARTICULAR	2020	BASE BAHIA	101012-1211	Em Uso	Toro	ANDRE LUIS DOS SANTOS SOUZA	036854	28/05/2026  00:00
+PKL7I62	PARTICULAR	2017	BASE BAHIA	101012-1211	Em Uso	Ranger	GERMAN SALVADOR LOBO BRITO	046791	01/08/2026  00:00
+RCY0F01	LM TRANSPORTES	2021	BASE CASCAVEL	105008-5802 	Em Uso	17.190 c/ Munck 16t	ADEMIR APARECIDO MAZZO	044726	20/08/2026  08:46
+BDZ6B45	PARTICULAR	2021	BASE CASCAVEL	105008-5802 	Em Uso	HR c/ Carroceria	PAULO JOSUE AVILA DOS SANTOS	044953	14/01/2026  00:00
+PJY3J02	PARTICULAR	2016	BASE CASCAVEL	105008-5802 	Em Uso	Bongo c/ Carroceria	LEANDRO GERALDO BRANDALISE	044896	27/12/2022  00:00
+SKI5E97	LM TRANSPORTES	2024	BASE CEARA	101020-2010	Em Uso	Ranger	JOSINALDO GOMES TEIXEIRA	053017	08/06/2026  10:01
+RVD1F25	LM (O&M)	2023	BASE CEARA	101020-2010	Em Uso	S10	ALBERTO SAMPAIO BEZERRA	052324	21/08/2026  07:41
+SKI9G44	LM TRANSPORTES	2024	BASE CEARA	101020-2010	Em Uso	Ranger	FRANCISCO SANDOVALDO DE OLIVEIRA	045735	05/01/2025  08:30
+SKI9C45	LM TRANSPORTES	2024	BASE CEARA	101020-2010	Em Uso	Ranger	ALUISIO ALCANTARA LIMA ALVES	045715	23/06/2025  09:35
+RVV6G56	LM TRANSPORTES	2023	BASE CEARA	101020-2010	Em Uso	S-10	LUCAS COSTA DO NASCIMENTO	048356	26/08/2026  08:31
+TXL8F16	LM (O&M)	2026	BASE CEARA	101020-2010	Em Uso	S-10	JOSINALDO GOMES TEIXEIRA	053017	10/07/2026  17:01
+SKI4C53	LM TRANSPORTES	2024	BASE CEARA	101020-2010	Em Uso	Ranger	ROBERTO ANGELO BARBOSA	045706	26/03/2025  09:52
+RGN4A51	PARTICULAR	2019	BASE CEARA	199901-1902	Em Uso	Compass	ELIEL RODRIGUES BEZERRA	053604	11/09/2025  00:00
+SVT0H52	SULFRIO/CSR	2025	BASE CSR PORTO ALEGRE	501006-5002	Em Uso	UK2500	DIENIFER DA SILVA MELHA	C000454	13/08/2026  13:31
+TJP5A53	SULFRIO/CSR	2025	BASE CSR VILA GUILHERME	501006-5002	Em Uso	Bongo c/ Baú	JOSE ROBSON DA SILVA SANTOS	C000606	20/11/2025  04:59
+GJP0E35	TB SERVIÇOS	2022	BASE ITAQUERA	101006-1102	Em Uso	HR c/ Baú	SANDER DANTAS DE BRITO	059877	22/05/2026  13:13
+SKL7E25	LM TRANSPORTES	2025	BASE ITAQUERA	101006-1102	Em Uso	Bongo c/ Baú	VANILTON GOMES DOS SANTOS	061058	12/05/2026  17:36
+GAO3E87	TB SERVIÇOS	2022	BASE ITAQUERA	101006-1102	Em Uso	HR c/ Baú	CLEBERSON DA COSTA LIMA	046497	21/08/2024  15:12
+BZR6F03	TB SERVIÇOS	2022	BASE ITAQUERA	101006-1102	Em Uso	HR c/ Baú	PEDRO HENRIQUE PEREIRA OLIVEIRA	061061	12/08/2026  13:47
+FZJ2C57	TB SERVIÇOS	2022	BASE ITAQUERA	101006-1102	Em Uso	HR c/ Baú	ADRIANO DOS SANTOS DA SILVA	044533	11/02/2025  12:13
+CVN7A29	TB SERVIÇOS	2022	BASE ITAQUERA	101006-1102	Em Uso	HR c/ Baú	LUCAS TAUAN DE OLIVEIRA	061884	28/07/2026  17:05
+FRY3734	QUALIMAN	2014	BASE ITAQUERA	101006-1102	Em Uso	24.280 c/ Munck 8t	HENRIQUE SANTO MAIOLI NETO	035498	07/04/2026  14:39
+EMH8690	ICOMON TECNOLOGIA	2010	BASE ITAQUERA	101006-1102	Em Uso	24.250 c/ Munck 5t	HENRIQUE SANTO MAIOLI NETO	035498	10/08/2026  14:02
+EQY4070	ICOMON TECNOLOGIA	2010	BASE ITAQUERA	101006-1102	Em Uso	24.250 c/ Munck 5t	JANDERSON CASSIANO NUNES VIEIRA	041245	02/04/2025  17:18
+EQY4075	ICOMON TECNOLOGIA	2010	BASE ITAQUERA	101006-1102	Em Uso	24.250 c/ Munck 5t	ADELSON GALDINO DE ANDRADE	028568	25/08/2025  10:22
+EXZ1J41	TB SERVIÇOS	2022	BASE ITAQUERA	101006-1102	Em Uso	HR c/ Baú	LAERCIO ALMEIDA DA SILVA	051092	18/06/2026  15:33
+FKM7C51	TB SERVIÇOS	2022	BASE ITAQUERA	101006-1102	Em Uso	HR c/ Baú	MARCELO DE SOUZA	052345	13/06/2024  14:31
+TIV9I32	SULFRIO/CSR	2025	BASE ITAQUERA	101006-1102	Em Uso	Bongo c/ Baú	GERALDO SOFIA DE JESUS	001152	14/01/2026  10:31
+GHN7C33	TB SERVIÇOS	2022	BASE ITAQUERA	101006-1102	Em Uso	HR c/ Baú	ALVARO NUNES JUNIOR	052812	21/10/2025  13:52
+CXT6A20	TB SERVIÇOS	2022	BASE ITAQUERA	101006-1102	Em Uso	HR c/ Baú	VICTOR HUGO PACIFICO TEIXEIRA	054962	24/03/2026  16:09
+FYT7B02	LM TRANSPORTES	2023	BASE MANAUS	105007-5722	Disponível	VW Express c/ Carroceria	DISPONIVEL - V.TAL_MANAUS	DVMA	28/04/2026  10:01
+SEP4D75	LM TRANSPORTES	2023	BASE MANAUS	105007-5702	Em Uso	VW Express c/ Carroceria	EDSON CAVALCANTE GOMES	046153	15/08/2023  11:31
+FHN0B62	LM TRANSPORTES	2023	BASE MANAUS	105007-5702	Em Uso	VW Express c/ Carroceria	ELDISON BORGES ALVES	046180	09/12/2023  02:11
+UDO0H51	SULFRIO	2026	BASE MANAUS	105000-5006	Em Uso	UK2500	HUDSON SOARES FERREIRA	045992	04/05/2026  08:01
+RCY2I87	LM TRANSPORTES	2021	BASE MARINGA	105008-5802 	Em Uso	17.190 c/ Munck 16t	JOAO CLEITON MACEDO SALES	044862	03/04/2025  11:31
+RCZ8A16	LM TRANSPORTES	2021	BASE MARINGA	105008-5802 	Em Uso	17.190 c/ Munck 16t	ANTONIO RODRIGUES FILHO	048170	02/01/2025  11:03
+SKI4F38	LM TRANSPORTES	2024	BASE MINAS GERAIS	101012-1212	Em Uso	Ranger	ALEXANDRE SANTOS DA SILVA	055785	01/09/2026  15:01
+BZR9H34	LM (O&M)	2020	BASE MINAS GERAIS	101012-1212	Em Uso	S-10	KESLEI JACKSON DE CASTRO	035360	28/08/2026  13:37
+SKI1J94	LM TRANSPORTES	2024	BASE MINAS GERAIS	101012-1212	Em Uso	Ranger	MIZAEL AGUIAR SILVA	039039	11/11/2024  14:48
+SKI2D23	LM TRANSPORTES	2024	BASE MINAS GERAIS	101012-1212	Em Uso	Ranger	KESLEI JACKSON DE CASTRO	035360	25/11/2024  11:02
+SKI2E38	LM TRANSPORTES	2024	BASE MINAS GERAIS	101012-1212	Em Uso	Ranger	ADRIANO RICARDO DE VASCONCELOS PINHEIRO	042264	18/11/2024  11:01
+SKI3B82	LM TRANSPORTES	2024	BASE MINAS GERAIS	101012-1212	Em Uso	Ranger	KRISHNAMURTI DOS SANTOS LUZ	025892	02/07/2026  09:41
+SKI3D21	LM TRANSPORTES	2024	BASE MINAS GERAIS	101012-1212	Em Uso	Ranger	GABRIEL FERNANDES DE CASTRO BRUZZI	056398	25/02/2026  09:34
+SKI5H66	LM TRANSPORTES	2024	BASE MINAS GERAIS	101012-1212	Em Uso	Ranger	SERGIO SILVA DE LANA	025499	04/11/2025  15:11
+TJZ3J37	LM (O&M)	2026	BASE MINAS GERAIS	101012-1212	Em Uso	S-10	GABRIEL FERNANDES DE CASTRO BRUZZI	056398	31/08/2026  13:17
+SKI1A08	LM TRANSPORTES	2024	BASE MINAS GERAIS	101012-1212	Em Uso	Ranger	PAULO RONALDO FERREIRA	036228	30/01/2026  10:30
+SKI4G58	LM TRANSPORTES	2024	BASE MINAS GERAIS	101012-1212	Em Uso	Ranger	VALDOMIRO INACIO DOS SANTOS FILHO	025577	10/01/2025  16:01
+GGU8F72	MOVIDA	2024	BASE MINAS GERAIS	101012-1212	Em Uso	S-10 c/ Capota	ANDRE MARCELINO DA SILVA	024334	02/12/2025  09:41
+FRM6C82	LM TRANSPORTES	2020	BASE MINAS GERAIS	101012-1212	Em Uso	S-10	HERNANDES NEPOMUCENO DE OLIVEIRA	049325	05/08/2026  15:00
+SKI5C71	LM TRANSPORTES	2024	BASE MINAS GERAIS	101012-1212	Em Uso	Ranger	DHIONATAN GABRIEL MOREIRA CAMPELO	039996	27/11/2024  16:02
+TDX6F00	RAJA RAC	2025	BASE MINAS GERAIS	101012-1212	Em Uso	TITANO ENDURANCE	SILVANO GONCALVES DOS SANTOS	025480	10/07/2026  15:37
+SKI5G68	LM TRANSPORTES	2024	BASE MINAS GERAIS	101012-1212	Em Uso	Ranger	HUDSON RODRIGUES DE SOUZA	055246	16/07/2025  10:38
+SKI5G94	LM TRANSPORTES	2024	BASE MINAS GERAIS	101012-1212	Em Uso	Ranger	CRELCIO HENRIQUE DO SALTO	025448	06/12/2024  08:02
+SKI3G03	LM TRANSPORTES	2024	BASE MINAS GERAIS	101012-1212	Em Uso	Ranger	ANDERSON DE JESUS	060196	29/07/2026  10:01
+SHB5C99	PARTICULAR	2023	BASE MINAS GERAIS	101012-1212	Em Uso	L200	EDUARDO GOMES DA SILVA	025511	09/07/2025  00:00
+SDV3G13	GOL	2023	BASE MINAS GERAIS	101012-1212	Em Uso	Bongo c/ Carroceria	EWERTON TEIXEIRA DE OLIVEIRA	025332	26/08/2024  13:17
+UDH5A07	LM (O&M)	2026	BASE MINAS GERAIS	101012-1212	Em Uso	S-10	HERNANDES NEPOMUCENO DE OLIVEIRA	049325	27/08/2026  15:59
+RVN3I55	PARTICULAR	2023	BASE MINAS GERAIS	101012-1212	Em Uso	L200	MARCELO DOS SANTOS FERREIRA	031434	12/11/2024  00:00
+TZB2J11	RAJA RAC	2026	BASE MINAS GERAIS	101012-1212	Em Uso	Ranger	FERNANDO HENRIQUE SIMAO	035368	25/06/2026  09:30
+TXY3F23	LM (O&M)	2026	BASE MINAS GERAIS	101012-1212	Em Uso	S-10	DOUGLAS DURAES RODRIGUES	041246	05/08/2026  12:33
+SEZ1E34	LM (O&M)	2024	BASE MINAS GERAIS	101012-1212	Em Uso	S-10	PATRICK MARLEY DA SILVA	046792	18/08/2026  14:29
+SFB5I02	LM (O&M)	2024	BASE MINAS GERAIS	101012-1212	Em Uso	S-10	FELIPE ARAUJO FERREIRA PAIVA	035359	11/08/2026  16:00
+SKI1B26	LM TRANSPORTES	2024	BASE MINAS GERAIS	101012-1212	Em Uso	Ranger	LUCAS DE OLIVEIRA GALDINO	042204	13/11/2024  11:02
+RVD1F41	LM (O&M)	2023	BASE MINAS GERAIS	101012-1212	Em Uso	S10	BRENNER ALVES MOTA	048719	07/04/2026  14:27
+SKI1A43	LM TRANSPORTES	2024	BASE MINAS GERAIS	101012-1212	Em Uso	Ranger	ARNALDO RIBEIRO DE CARVALHO JUNIOR	035835	27/05/2026  15:46
+SHD6F89	RAJA RAC	2023	BASE MINAS GERAIS	101012-1212	Em Uso	Hilux	CARLOS ALBERTO DA SILVA	050769	26/03/2026  14:00
+SHR8E67	RAJA RAC	2023	BASE MINAS GERAIS	101012-1212	Em Uso	Hilux	JORGE ANTONIO PEREIRA MARTINS	054178	21/03/2025  12:31
+SKI0D51	LM TRANSPORTES	2024	BASE MINAS GERAIS	101012-1212	Em Uso	Ranger	LEONARDO AUGUSTO DE SOUZA COSTA	026435	22/07/2026  09:31
+SKI0E39	LM TRANSPORTES	2024	BASE MINAS GERAIS	101015-1511	Em Uso	Ranger	VICENTE CATARINO SANTOS	034360	18/05/2026  14:51
+SKI0G96	LM TRANSPORTES	2024	BASE MINAS GERAIS	101012-1212	Em Uso	Ranger	JULIO CESAR FREITAS RODRIGUES	042425	14/08/2025  11:18
+SKI0H81	LM TRANSPORTES	2024	BASE MINAS GERAIS	101012-1212	Em Uso	Ranger	BRENNER ALVES MOTA	048719	22/01/2025  08:01
+SKI4I69	LM TRANSPORTES	2024	BASE MINAS GERAIS	101012-1212	Em Uso	Ranger	WEVERTON LUIZ DOS SANTOS	060816	18/05/2026  15:11
+RVG5A30	LM (O&M)	2023	BASE MINAS GERAIS	101012-1212	Em Uso	S10	HUDSON RODRIGUES DE SOUZA	055246	24/07/2026  16:32
+SSS3H76	LM (O&M)	2024	BASE MINAS GERAIS	101012-1212	Em Uso	Hilux	LEONARDO AUGUSTO DE SOUZA COSTA	026435	03/09/2026  17:29
+GFK6F51	MOVIDA	2024	BASE MINAS GERAIS	101012-1212	Em Uso	S-10 c/ Capota	ANDRE MARCELINO DA SILVA	024334	03/12/2025  11:21
+SYG6I48	RAJA RAC	2024	BASE MINAS GERAIS	101012-1212	Em Uso	L200	WALLACES HENRIQUE DO NASCIMENTO FORTES	049599	01/04/2026  10:57
+RCW3B17	LM TRANSPORTES	2021	BASE MINAS GERAIS	101021-2110	Em Uso	17.190 c/ Munck 16t	LUIZ JORGE SANTANA ALMEIDA	036874	22/07/2026  10:01
+SWF1B70	LM (O&M)	2024	BASE MINAS GERAIS	101012-1212	Em Uso	Hilux	RODOLFO ALVES CAVALCANTI	043456	03/09/2026  17:00
+QXO9H42	RAJA RAC	2025	BASE MINAS GERAIS	101012-1212	Em Uso	L200	FERNANDO HENRIQUE TEIXEIRA FREITAS	052572	03/03/2026  13:20
+TCF2I92	RAJA RAC	2024	BASE MINAS GERAIS	101012-1212	Em Uso	Ranger	JEPSON ARAUJO DOS SANTOS	038828	08/04/2025  09:31
+TCO4J08	RAJA RAC	2024	BASE MINAS GERAIS	101012-1212	Em Uso	Ranger	MARCELO ANTONIO RIBEIRO	025497	20/08/2026  15:25
+GAC5J82	MOVIDA	2024	BASE MINAS GERAIS	101012-1212	Em Uso	S-10 c/ Capota	ALEX XAVIER DA SILVA	032876	03/12/2025  11:18
+GTN1C16	RAJA RAC	2024	BASE MINAS GERAIS	101012-1212	Em Uso	Hilux	DANIEL SIMAN GLORIA	033996	02/09/2026  11:00
+PWU9A19	PARTICULAR	2015	BASE MINAS GERAIS	101012-1212	Em Uso	Amarok	WILLIAN JOSUE RODRIGUES	035442	20/12/2022  00:00
+RMN2I45	LM (O&M)	2021	BASE MINAS GERAIS	101012-1212	Em Uso	Hilux	ANDERSON DE JESUS	060196	18/08/2026  15:03
+TCZ7I88	RAJA RAC	2024	BASE MINAS GERAIS	101012-1212	Em Uso	Ranger	SILVANO GONCALVES DOS SANTOS	025480	05/11/2025  13:18
+SKI9E76	LM TRANSPORTES	2024	BASE MINAS GERAIS	101012-1212	Em Uso	Ranger	FELIPE ARAUJO FERREIRA PAIVA	035359	13/11/2024  15:03
+TDD2B37	RAJA RAC	2024	BASE MINAS GERAIS	101012-1212	Em Uso	Ranger	JEPSON ARAUJO DOS SANTOS	038828	08/07/2026  09:00
+SKI9A47	LM TRANSPORTES	2024	BASE MINAS GERAIS	101012-1212	Em Uso	Ranger	RODOLFO ALVES CAVALCANTI	043456	26/11/2024  17:35
+SKI8J21	LM TRANSPORTES	2024	BASE MINAS GERAIS	101012-1212	Em Uso	Ranger	ANDERSON BISSIATTI FERREIRA	053322	17/12/2025  17:08
+SKI8I14	LM TRANSPORTES	2024	BASE MINAS GERAIS	101012-1212	Em Uso	Ranger	WELLINGTON GALDINO DE MOURA	025579	25/11/2024  11:49
+GEY4D12	MOVIDA	2024	BASE MINAS GERAIS	101012-1212	Em Uso	S-10 c/ Capota	ALEX XAVIER DA SILVA	032876	03/12/2025  11:20
+SKI8C59	LM TRANSPORTES	2024	BASE MINAS GERAIS	101012-1212	Em Uso	Ranger	DOUGLAS DURAES RODRIGUES	041246	22/11/2024  12:41
+TDF8J88	RAJA RAC	2024	BASE MINAS GERAIS	101012-1212	Em Uso	Ranger	MARCOS PAULO GOMES DE OLIVEIRA	036224	08/10/2025  08:31
+SKI4J27	LM TRANSPORTES	2024	BASE PERNAMBUCO	101020-2010	Em Uso	Ranger	RONEI OLIVEIRA RIBEIRO	050173	30/04/2025  10:11
+RVG5A49	LM TRANSPORTES	2023	BASE PERNAMBUCO	101020-2010	Em Uso	S10	JOAO CLEBSON VITORINO DA SILVA	051345	05/06/2026  16:00
+TXR5J40	LM (O&M)	2026	BASE PERNAMBUCO	101020-2010	Em Uso	S-10	JOAO CLEBSON VITORINO DA SILVA	051345	25/06/2026  16:33
+RVD1F26	LM (O&M)	2023	BASE PERNAMBUCO	101020-2010	Em Uso	S10	CLAYTON BARROS DA CRUZ	052273	23/06/2026  11:00
+QYB5J51	PARTICULAR	2019	BASE PERNAMBUCO	101015-1514	Em Uso	Toro	CRISTIANO MONTEIRO MAIA	024280	01/03/2024  00:00
+UCB9E45	LM (O&M)	2026	BASE PERNAMBUCO	101020-2010	Em Uso	Ranger	LUIZ CARLOS CORREIA DA SILVA	049538	19/08/2026  16:23
+SKI9H72	LM TRANSPORTES	2024	BASE PERNAMBUCO	101020-2010	Em Uso	Ranger	ERIWELTON PEREIRA DE LIMA	050177	10/09/2025  11:01
+SKI6F02	LM TRANSPORTES	2024	BASE PERNAMBUCO	101020-2010	Em Uso	Ranger	CLAYTON BARROS DA CRUZ	052273	12/01/2026  10:01
+TBP7G46	LM (O&M)	2026	BASE PERNAMBUCO	101020-2010	Em Uso	Ranger	ERIWELTON PEREIRA DE LIMA	050177	04/08/2026  15:05
+SKI9E03	LM TRANSPORTES	2024	BASE PERNAMBUCO	101020-2010	Em Uso	Ranger	LUIZ CARLOS CORREIA DA SILVA	049538	13/11/2024  15:02
+TBN0C09	LM (O&M)	2026	BASE PERNAMBUCO	101020-2010	Em Uso	Ranger	RONEI OLIVEIRA RIBEIRO	050173	25/08/2026  12:15
+SKI8F53	LM TRANSPORTES	2024	BASE PIAUI	101020-2010	Em Uso	Ranger	ITALO MATIAS DA SILVA	046684	11/09/2025  09:31
+RVG5A91	LM (O&M)	2023	BASE PIAUI	101020-2010	Em Uso	S-10	FLAVIO FRANCISCO DE ARAUJO	052355	02/09/2026  14:02
+PIX0G37	PARTICULAR	2019	BASE PIAUI	101020-2010	Em Uso	Toro	ERONALDO DE SOUSA LIMA	056475	15/07/2025  00:00
+RVG5A45	LM (O&M)	2023	BASE PIAUI	101020-2010	Em Uso	S10	MARCUS GREGORIO DOS SANTOS LIMA	047682	31/07/2026  12:00
+EOD5493	LM (O&M)	2020	BASE PIAUI	101018-1810	Em Uso	S-10	ANTONIO CARLOS DA ROCHA ALVES FILHO	045789	11/02/2026  13:21
+SKI9J41	LM TRANSPORTES	2024	BASE PIAUI	101020-2010	Em Uso	Ranger	JADERSON MARTINS PINHEIRO LOPES	045726	05/03/2026  11:54
+SKI1I33	LM TRANSPORTES	2024	BASE PIAUI	101020-2010	Em Uso	Ranger	CELIO JOSE ALVES ARAUJO	045707	30/07/2025  08:51
+SKI1H34	LM TRANSPORTES	2024	BASE PIAUI	101020-2010	Em Uso	Ranger	FLAVIO FRANCISCO DE ARAUJO	052355	01/09/2026  10:15
+UAX0D17	LM (O&M)	2026	BASE PIAUI	101020-2010	Em Uso	Ranger	JADERSON MARTINS PINHEIRO LOPES	045726	14/04/2026  15:00
+SKI0A04	LM TRANSPORTES	2024	BASE PIAUI	101018-1810	Em Uso	Ranger	MAURICIO CARDOSO ALVES	050489	08/07/2025  10:17
+SKI9H12	LM TRANSPORTES	2024	BASE PIAUI	101020-2010	Em Uso	Ranger	RAIMUNDO NONATO PAES RIBEIRO	045696	21/11/2024  11:48
+SDV3G08	GOL	2023	BASE PINHAIS	105008-5801	Em Uso	Bongo c/ Carroceria	GIBSON ALBERTO AGUILERA RODRIGUEZ	061819	28/07/2026  14:26
+SEE3I81	GOL	2023	BASE PINHAIS	199901-1906	Disponível	Bongo c/ Carroceria	DISPONIVEL - PR	DPR	18/08/2026  15:49
+JOR9I69	EMPRESA TERCEIRIZADA	2001	BASE PINHAIS	105008-5831	Em Uso	M.BENZ/1418 R	V ORTEGA - COBRE V.TAL	101404	15/06/2026  14:56
+GAO0I45	EMPRESA TERCEIRIZADA	2023	BASE PINHAIS	105008-5831	Em Uso	I/M.BENZ 315CDI STREET C	V ORTEGA - COBRE V.TAL	101404	17/06/2026  02:42
+RCW3H62	LM TRANSPORTES	2021	BASE PINHAIS	105008-5802 	Em Uso	17.190 c/ Munck 16t	GILMAR ALVES DOS SANTOS	061963	18/08/2026  15:41
+SEE3I82	GOL	2023	BASE PINHAIS	105008-5811 	Em Uso	Bongo c/ Carroceria	FABIO PACHECO FAGUNDES	044826	14/03/2024  16:50
+EHS0I41	EMPRESA TERCEIRIZADA	2024	BASE PINHAIS	105008-5831	Em Uso	17.210	VINEDU ENGENHARIA - COBRE V.TAL	101349	15/06/2026  14:56
+RCY5E91	LM TRANSPORTES	2021	BASE PINHAIS	105008-5811 	Em Uso	17.190 c/ Munck 16t	CLEVERSON DE JESUS PRENSAK	061135	23/06/2026  10:00
+FVR2B77	EMPRESA TERCEIRIZADA	2022	BASE PINHAIS	105008-5831	Em Uso	17.230 CRM 4X2	V ORTEGA - COBRE V.TAL	101404	04/12/2024  17:00
+SEE3I87	GOL	2023	BASE PINHAIS	105008-5801	Em Uso	Bongo c/ Carroceria	OMAR LUIS ROSALES ORTEGA	059922	13/03/2026  09:42
+SEE3I83	GOL	2023	BASE PINHAIS	105008-5801	Em Uso	Bongo c/ Carroceria	VALTAIR MIZAEL	049880	10/10/2023  14:41
+SFH4G87	LM TRANSPORTES	2024	BASE POA	101005-1029	Em Uso	17.210 c/ Munck 16t	KENEDY CARDOSO SANTOS	057026	21/07/2026  02:26
+SEQ9J78	LM TRANSPORTES	2023	BASE POA	101005-1029	Em Uso	VW Express c/ Carroceria	CARLOS ALBERTO DE SOUSA SILVA	025833	21/07/2026  01:41
+SEP4D73	LM TRANSPORTES	2023	BASE POA	101005-1029	Em Uso	VW Express c/ Carroceria	ROSIVAL  AMORIM DE SOUSA	052106	03/12/2025  08:32
+SKL0B32	LM TRANSPORTES	2025	BASE POA	101005-1029	Em Uso	17.210 c/ Munck 16t	MANOEL EDILSON DE SOUZA	007261	11/02/2026  17:03
+RCY5G34	LM TRANSPORTES	2021	BASE POA	101005-1029	Em Uso	17.190 c/ Munck 16t	MANOEL EDILSON DE SOUZA	007261	28/08/2026  11:24
+TJO9D30	CLEAN CAR	2025	BASE POA	101005-1029	Em Uso	Bongo c/ Baú	LINDEMBERG SILVA DO CARMO	001269	28/01/2025  01:15
+SKL6F61	LM TRANSPORTES	2025	BASE POA	101005-1029	Em Uso	17.210 c/ Munck 16t	REGINALDO BISPO DA SILVA	028958	21/07/2026  01:46
+TMF4E57	LM TRANSPORTES	2025	BASE POA	101005-1029	Em Uso	VW Express c/ Bau	PAULO CESAR MAIA DOS SANTOS	038855	21/07/2026  01:59
+SKL7H51	LM TRANSPORTES	2025	BASE SAO BERNARDO DO CAMPO	101032-3211	Em Uso	Bongo c/ Baú	FABIANO DOS SANTOS BRITO	061374	17/06/2026  02:41
+SKL0H38	LM TRANSPORTES	2025	BASE SAO BERNARDO DO CAMPO	101032-3211	Em Uso	Bongo c/ Baú	RAIMUNDO DA SILVA PEDROZA	029643	18/07/2026  01:58
+TKS6G99	GOL	2025	BASE SAO BERNARDO DO CAMPO	101017-1710	Em Uso	Bongo c/ Baú	RONALDO DE SOUZA SANTANA	029528	19/08/2026  01:46
+RCW4D36	LM TRANSPORTES	2021	BASE SAO BERNARDO DO CAMPO	101005-1029	Em Uso	17.190 c/ Munck 16t	EDINALDO BARBOSA DO NASCIMENTO	021205	02/02/2026  10:02
+EQY4071	ICOMON TECNOLOGIA	2010	BASE SAO BERNARDO DO CAMPO	101005-1029	Em Uso	13.180 c/ Guincho	GETULIO APARECIDO DE AZEVEDO BRAZ	006762	10/09/2025  14:09
+EQY4073	ICOMON TECNOLOGIA	2010	BASE SAO BERNARDO DO CAMPO	101005-1029	Em Uso	13.180 c/ Guincho	GETULIO APARECIDO DE AZEVEDO BRAZ	006762	20/07/2026  09:30
+SKL7B23	LM TRANSPORTES	2025	BASE SAO BERNARDO DO CAMPO	101005-1028	Em Uso	Bongo c/ Baú	BRUNO CARDOSO LEONE	059350	24/06/2026  02:39
+RDB1B94	LM TRANSPORTES	2022	BASE SAO BERNARDO DO CAMPO	101005-1028	Em Uso	17.190 c/ Munck 16t	JOSE CARLOS MIGUEL LOURENCO	034955	17/08/2026  13:41
+SKL0C48	LM TRANSPORTES	2025	BASE SAO BERNARDO DO CAMPO	101005-1029	Em Uso	17.210 c/ Munck 16t	JOILSON DE SOUZA PEREIRA	043158	23/01/2026  15:02
+SDV3G10	GOL	2023	BASE SAO BERNARDO DO CAMPO	101005-1029	Em Uso	Bongo c/ Carroceria	MARIVALDO MOURA DE SOUZA	040303	18/02/2025  16:06
+CGG0596	ICOMON / CONSTRUTORA TECH	1996	BASE SAO BERNARDO DO CAMPO	199901-1906	Manutenção -  Mecânica	F-12.000 c/ Guincho	MECANICA - ABC	PMABC	02/07/2025  09:01
+TIO6C42	CLEAN CAR	2025	BASE SAO BERNARDO DO CAMPO	101032-3211	Em Uso	Bongo c/ Baú	JOSE CAPITANI FILHO	042102	18/07/2026  02:18
+FJY7404	QUALIMAN	2013	BASE VILA GUILHERME	101005-1029	Em Uso	8.140 - Bau	FWS	100874	02/07/2026  10:00
+GAH0D65	GOL	2023	BASE VILA GUILHERME	101005-1029	Em Uso	Bongo c/ Baú	JOAO GOMES DOS SANTOS	015258	18/08/2026  01:27
+FJY7405	QUALIMAN	2013	BASE VILA GUILHERME	101005-1029	Em Uso	8.160 c/ Munck 2t	FRANCISCO RIVELINO ALVES TRIGUEIRO	000765	23/07/2026  01:00
+FJY7406	QUALIMAN	2013	BASE VILA GUILHERME	101005-1029	Em Uso	8.160 c/ Munck 2t	FWS	100874	27/08/2026  10:37
+FJY7415	QUALIMAN	2013	BASE VILA GUILHERME	101005-1029	Em Uso	8.160 c/ Guincho	V O C TELECOMUNICACOES	101136	17/07/2026  16:44
+SSU7A48	MOVIDA	2024	BASE VILA GUILHERME	199901-1906	Manutenção -  Mecânica	S-10 c/ Capota	MECANICA - VG1	PMVG1	27/07/2026  13:52
+FNF8D42	MOVIDA	2024	BASE VILA GUILHERME	101005-1029	Em Uso	S-10 c/ Capota	V O C TELECOMUNICACOES	101136	26/01/2026  09:58
+FNZ2I17	PARTICULAR	2014	BASE VILA GUILHERME	101005-1029	Em Uso	Bongo c/ Baú	JOSE DA SILVA LEITE	032521	22/08/2023  02:32
+FOJ7J53	SULFRIO	2025	BASE VILA GUILHERME	199901-1906	Manutenção -  Funilaria	Bongo c/ Baú	FUNILARIA - VG1	PFVG1	19/08/2026  12:01
+FOO0F94	GOL	2023	BASE VILA GUILHERME	101005-1029	Em Uso	Bongo c/ Baú	JOTEL - EDMIR	101079	10/07/2026  17:20
+GAC0E63	GOL	2023	BASE VILA GUILHERME	101005-1029	Em Uso	Bongo c/ Baú	AZEILTON LIMA MATOS	027976	18/08/2026  01:46
+SSW2J78	MOVIDA	2024	BASE VILA GUILHERME	101005-1029	Em Uso	S-10 c/ Capota	FLAVIO DOS SANTOS CARDOSO	038626	21/07/2026  01:59
+FPL1I85	LM TRANSPORTES	2023	BASE VILA GUILHERME	101005-1029	Em Uso	VW Express c/ Carroceria	GENILSON FERREIRA  DOS SANTOS	052101	24/01/2025  15:31
+FTN4H44	PARTICULAR	2023	BASE VILA GUILHERME	101006-1170	Em Uso	Compass	EDUARDO ROBERTO THOMAZ	025839	18/01/2025  01:51
+TJJ8G96	GOL	2025	BASE VILA GUILHERME	101005-1029	Em Uso	Bongo c/ Baú	WELSON CAITANO DE ALMEIDA	026937	24/04/2026  03:36
+FPN7D02	GOL	2022	BASE VILA GUILHERME	199901-1906	Manutenção -  Mecânica	Bongo c/ Carroceria	MECANICA - VG1	PMVG1	19/08/2026  08:28
+FPQ9C03	GOL	2023	BASE VILA GUILHERME	101005-1029	Em Uso	Bongo c/ Baú	JOSE WILK PEREIRA DOS SANTOS	018257	21/07/2026  01:28
+STA4D63	MOVIDA	2024	BASE VILA GUILHERME	101005-1029	Em Uso	S-10 c/ Capota	VMW - VIVO NE	101545	06/02/2026  10:57
+TIV3E00	GOL	2025	BASE VILA GUILHERME	101005-1028	Em Uso	Bongo c/ Baú	JOSENILDO MARCOLINO DOS SANTOS	028194	28/10/2024  14:21
+FXZ5D94	GOL	2023	BASE VILA GUILHERME	101005-1029	Em Uso	Bongo c/ Baú	M AURELIO - VIVO SP	101631	28/07/2026  16:38
+FXV3J62	MOVIDA	2024	BASE VILA GUILHERME	101005-1029	Em Uso	S-10 c/ Capota	WR TELECON	101260	03/09/2025  14:22
+ESH0202	EMPRESA TERCEIRIZADA	2018	BASE VILA GUILHERME	101005-1029	Em Uso	Ranger	SANTOS & CAMILO - CÍCERO JOSIVAN DOS SANTOS	100722	28/04/2021  00:00
+STD9I10	MOVIDA	2024	BASE VILA GUILHERME	101005-1029	Em Uso	S-10 c/ Capota	AGM TELECOM	101265	03/06/2026  15:44
+FTD8E31	SULFRIO	2025	BASE VILA GUILHERME	101005-1028	Em Uso	Bongo c/ Baú	GLEYSON FAGUNDES DE LIMA MOREIRA	033666	15/01/2026  08:43
+SUN8G24	SULFRIO	2025	BASE VILA GUILHERME	101005-1029	Em Uso	Bongo c/ Baú	OSVALDO REZENDE FILHO	024754	18/08/2026  01:41
+SSZ0H16	MOVIDA	2024	BASE VILA GUILHERME	199901-1906	Manutenção -  Funilaria	S-10 c/ Capota	FUNILARIA - VG1	PFVG1	25/06/2026  11:45
+TLX3E50	CLEAN CAR	2025	BASE VILA GUILHERME	101005-1029	Em Uso	Bongo c/ Baú	ROGERIO FERREIRA DA SILVA	001426	24/04/2026  02:11
+TMI8I94	CLEAN CAR	2025	BASE VILA GUILHERME	101005-1029	Em Uso	Bongo c/ Baú	MIGUEL RODRIGUES DE SOUZA	028672	18/08/2026  01:47
+BPQ5B73	EMPRESA TERCEIRIZADA	2021	BASE VILA GUILHERME	101005-1029	Em Uso	314 CDI Street	A T TELECOM	100944	18/05/2022  08:00
+BSO8H22	EMPRESA TERCEIRIZADA	2021	BASE VILA GUILHERME	101005-1029	Em Uso	Ducato	BLISS - SP	101057	15/06/2026  14:52
+TMH6H78	CLEAN CAR	2025	BASE VILA GUILHERME	105008-5831	Em Uso	Bongo c/ Baú	FWS - COBRE V.TAL	101423	15/06/2026  14:56
+TMG3A97	LM TRANSPORTES	2025	BASE VILA GUILHERME	101005-1029	Em Uso	VW Express c/ Bau	DANILO DE SOUSA SANTOS LAGO	030133	21/07/2026  01:48
+CSK0B92	EMPRESA TERCEIRIZADA	1988	BASE VILA GUILHERME	101005-1029	Em Uso	Retroescavadeira	FRANCISCO ROGERIO ALMEIDA	036125	28/01/2025  04:33
+TMC0E62	CLEAN CAR	2025	BASE VILA GUILHERME	199901-1906	Manutenção -  Mecânica	Bongo c/ Baú	MECANICA - VG1	PMVG1	28/08/2026  15:39
+CYB5E40	EMPRESA TERCEIRIZADA	2001	BASE VILA GUILHERME	101005-1029	Em Uso	F-12.000	H M M TELECOM - SP	101541	15/06/2026  08:00
+DNA0495	ICOMON TECNOLOGIA	2006	BASE VILA GUILHERME	101005-1029	Em Uso	13.180 c/ Guincho	DISCOVERY TELECOM - VIVO	101373	15/07/2026  17:03
+DNA0497	ICOMON TECNOLOGIA	2006	BASE VILA GUILHERME	199901-1906	Manutenção -  Mecânica	13.180 c/ Guincho	MECANICA - VG1	PMVG1	30/06/2026  09:36
+DSJ2A08	EMPRESA TERCEIRIZADA	2006	BASE VILA GUILHERME	101005-1029	Em Uso	Ranger	GUISA SOLUÇÕES - VIVO SP	101262	14/09/2023  09:40
+DUA6875	ICOMON TECNOLOGIA	2006	BASE VILA GUILHERME	199901-1906	Disponível	15.180 c/ Munck 5t	DISPONIVEL - VG1	P1001VG1	20/01/2026  11:31
+EFV2A94	EMPRESA TERCEIRIZADA	2012	BASE VILA GUILHERME	101005-1029	Em Uso	HR c/ Baú	SHEKINAH INSTALACOES E REFORMAS GERAIS	101134	25/05/2021  00:00
+EXR3B66	GOL	2022	BASE VILA GUILHERME	101032-3211	Em Uso	Bongo c/ Carroceria	WL TELECOM - HUAWEI TIM	101621	23/04/2026  14:59
+SKL9I38	LM TRANSPORTES	2025	BASE VILA GUILHERME	101005-1028	Em Uso	Bongo c/ Baú	ADNAEL ALVES DA SILVA	046284	13/02/2026  08:56
+FCZ3J35	GOL	2023	BASE VILA GUILHERME	101005-1029	Em Uso	Bongo c/ Baú	EDSON BATISTA DOS SANTOS	006717	22/03/2024  01:10
+FCJ7B61	EMPRESA TERCEIRIZADA	2016	BASE VILA GUILHERME	101005-1029	Em Uso	17.280	VMW - SP	101365	25/08/2026  17:00
+FCB2G83	ELEVA	2012	BASE VILA GUILHERME	199901-1906	Disponível	24.280 c/ Munck 12t	DISPONIVEL - VG1	P1001VG1	24/06/2026  15:15
+EZE3E52	GOL	2025	BASE VILA GUILHERME	101005-1029	Em Uso	Bongo c/ Baú	DANIEL MARGIOTTA DA ROCHA	031746	11/12/2024  09:03
+TJR6G93	CLEAN CAR	2025	BASE VILA GUILHERME	101005-1028	Em Uso	Bongo c/ Baú	RODRIGO GOMES PORTEIRO	047383	27/03/2026  11:35
+EHS0021	EMPRESA TERCEIRIZADA	2019	BASE VILA GUILHERME	101005-1029	Em Uso	VW Express c/ Bau	EDIVALDO H. DA SILVA TELECOMUNICACOES - ME	101036	06/01/2021  00:00
+EXE7C33	MOVIDA	2024	BASE VILA GUILHERME	101005-1029	Em Uso	S-10 c/ Capota	IVO DA SILVA	059602	21/08/2026  15:19
+EHS0H03	EMPRESA TERCEIRIZADA	2022	BASE VILA GUILHERME	101005-1029	Em Uso	14.190	EDIVALDO H. DA SILVA TELECOMUNICACOES - ME	101036	28/02/2022  11:20
+TKD1H05	CLEAN CAR	2025	BASE VILA GUILHERME	101005-1029	Em Uso	Bongo c/ Baú	ANTONIO CARLOS MESQUITA	049374	22/11/2024  09:13
+EPA4D31	EMPRESA TERCEIRIZADA	2021	BASE VILA GUILHERME	101005-1029	Em Uso	314 CDI Street	SANTOS & CAMILO - CÍCERO JOSIVAN DOS SANTOS	100722	01/09/2021  00:00
+TLC9F80	GOL	2025	BASE VILA GUILHERME	101005-1028	Em Uso	Bongo c/ Baú	DORINALDO FERREIRA DOS SANTOS	006496	06/12/2024  14:10
+TLD4B05	CLEAN CAR	2025	BASE VILA GUILHERME	101005-1029	Em Uso	Bongo c/ Baú	EDUARDO DE JESUS NUNES	044206	14/05/2025  15:54
+ELP6013	EMPRESA TERCEIRIZADA	2009	BASE VILA GUILHERME	101005-1029	Em Uso	HR c/ Baú	FWS	100874	08/03/2022  11:00
+TJR1B08	CLEAN CAR	2025	BASE VILA GUILHERME	101005-1029	Em Uso	Bongo c/ Baú	DEIVSON CESAR TENORIO SILVA	059860	16/04/2026  10:03
+SSR9F61	MOVIDA	2024	BASE VILA GUILHERME	199901-1906	Manutenção -  Mecânica	S-10 c/ Capota	MECANICA - VG1	PMVG1	08/07/2026  14:27
+SKL3I34	LM TRANSPORTES	2025	BASE VILA GUILHERME	101005-1029	Em Uso	Bongo c/ Baú	VMW - SP	101365	10/03/2026  15:29
+GDK4G02	LM TRANSPORTES	2023	BASE VILA GUILHERME	101005-1029	Em Uso	VW Express c/ Carroceria	H M M TELECOMUNICACOES -  Rifaina Campinas	101350	18/08/2026  15:12
+SKL2A19	LM TRANSPORTES	2025	BASE VILA GUILHERME	101005-1029	Em Uso	Bongo c/ Baú	WALTER VIEIRA CABRAL	020993	22/03/2026  04:24
+SKL2A44	LM TRANSPORTES	2025	BASE VILA GUILHERME	101005-1029	Em Uso	17.210 c/ Munck 16t	HELIO BARBOSA DOS SANTOS	027700	05/08/2026  11:59
+SKL2B24	LM TRANSPORTES	2025	BASE VILA GUILHERME	101005-1028	Em Uso	Bongo c/ Baú	WILISON DE SALES VIEIRA	043317	20/08/2026  10:58
+RCX1J67	LM TRANSPORTES	2021	BASE VILA GUILHERME	101005-1029	Em Uso	17.190 c/ Munck 16t	FABIO RODRIGUES MELILLO	027169	24/03/2026  17:31
+RCZ8D64	LM TRANSPORTES	2022	BASE VILA GUILHERME	101005-1029	Em Uso	17.190 c/ Munck 16t	SILVIO DOS SANTOS SILVA	032283	09/09/2025  09:12
+RCW7J49	LM TRANSPORTES	2021	BASE VILA GUILHERME	101005-1029	Em Uso	17.190 c/ Munck 16t	ADRIANO DOS SANTOS CRUZ	005934	19/03/2026  15:44
+SKL0B92	LM TRANSPORTES	2025	BASE VILA GUILHERME	101005-1029	Em Uso	Bongo c/ Baú	DISCOVERY TELECOM - VIVO	101373	18/03/2026  13:47
+SKL4E09	LM TRANSPORTES	2025	BASE VILA GUILHERME	101005-1029	Em Uso	17.210 c/ Munck 16t	FRANCISCO ROGERIO ALMEIDA	036125	15/07/2026  15:42
+RCW0B77	LM TRANSPORTES	2021	BASE VILA GUILHERME	101005-1029	Em Uso	17.190 c/ Munck 16t	ROGERIO DOS SANTOS SILVA	007306	28/07/2026  16:03
+SKL4E70	LM TRANSPORTES	2025	BASE VILA GUILHERME	101005-1028	Em Uso	Bongo c/ Baú	IVAIR RAMOS SILVEIRA	056383	07/01/2026  10:55
+SKL4I95	LM TRANSPORTES	2025	BASE VILA GUILHERME	101005-1029	Em Uso	Bongo c/ Baú	AGENALDO DA SILVA VIEIRA	018102	26/03/2026  09:43
+QUV6B87	EMPRESA TERCEIRIZADA	2019	BASE VILA GUILHERME	101005-1029	Em Uso	EXPERT	JBS - VIVO SP	101604	25/08/2026  17:00
+SKL5E03	LM TRANSPORTES	2025	BASE VILA GUILHERME	101005-1029	Em Uso	17.210 c/ Munck 16t	JOSE HUGO SOUZA FILHO	031444	26/11/2025  03:30
+RCW9A74	LM TRANSPORTES	2021	BASE VILA GUILHERME	101005-1029	Em Uso	17.190 c/ Munck 16t	PEDRO EUDES DO NASCIMENTO	040942	21/07/2026  02:03
+RZC3E09	EMPRESA TERCEIRIZADA	2022	BASE VILA GUILHERME	101005-1029	Em Uso	TECTOR Munck	H M M TELECOMUNICACOES -  Rifaina Campinas	101350	23/07/2026  02:48
+AUO5B40	EMPRESA TERCEIRIZADA	2011	BASE VILA GUILHERME	101005-1029	Em Uso	MB 915C	BLISS - SP	101057	13/04/2022  08:00
+SDV4I40	GOL	2023	BASE VILA GUILHERME	101017-1710	Em Uso	Bongo c/ Baú	MARCIO MEDEIROS DE CASTRO	038132	11/01/2023  11:23
+SDV4I38	GOL	2023	BASE VILA GUILHERME	101005-1029	Em Uso	Bongo c/ Baú	JOSE MARCIO CARREIRO DA SILVA	037333	19/08/2026  01:55
+SEE3I84	GOL	2023	BASE VILA GUILHERME	101005-1028	Em Uso	Bongo c/ Baú	EDSON BEZERRA DA SILVA	036709	09/05/2025  10:21
+SEE3I86	GOL	2023	BASE VILA GUILHERME	101005-1028	Em Uso	Bongo c/ Baú	FELIPE APARECIDO VIEIRA	038435	24/06/2026  10:24
+SKL1A25	LM TRANSPORTES	2025	BASE VILA GUILHERME	101005-1029	Em Uso	Bongo c/ Baú	JOTEL - EDMIR	101079	19/02/2026  11:00
+SEP4D72	LM TRANSPORTES	2023	BASE VILA GUILHERME	101005-1029	Em Uso	VW Express c/ Carroceria	WALTER VIEIRA CABRAL	020993	21/03/2026  04:23
+SKL6A81	LM TRANSPORTES	2025	BASE VILA GUILHERME	101005-1028	Em Uso	17.190 c/ Munck 16t	FABIANO LAURO	032680	20/12/2024  16:12
+SEP4D74	LM TRANSPORTES	2023	BASE VILA GUILHERME	101005-1028	Em Uso	VW Express c/ Carroceria	WAGNER STEVE ALVES DOS SANTOS	037131	31/03/2025  10:14
+SEP4D76	LM TRANSPORTES	2023	BASE VILA GUILHERME	101005-1029	Em Uso	VW Express c/ Carroceria	EDERSON SOARES DO NASCIMENTO	020141	18/12/2025  11:00
+SEP4D96	LM TRANSPORTES	2023	BASE VILA GUILHERME	199901-1906	Disponível	VW Express c/ Carroceria	DISPONIVEL - VG1	P1001VG1	23/07/2026  14:01
+SFH4G83	LM TRANSPORTES	2024	BASE VILA GUILHERME	101005-1029	Em Uso	17.210 c/ Munck 16t	JADSON DOS SANTOS SILVA	027517	21/05/2026  08:33
+SFH4G88	LM TRANSPORTES	2024	BASE VILA GUILHERME	101005-1029	Em Uso	17.210 c/ Munck 16t	ANDRE SOARES DO AMARAL	023873	11/08/2026  10:44
+SKL0A61	LM TRANSPORTES	2025	BASE VILA GUILHERME	101005-1029	Em Uso	17.190 c/ Munck 16t	CLEIVER SERVILHA DO NASCIMENTO	052138	15/07/2025  15:37
+SDV3F14	GOL	2023	BASE VILA GUILHERME	101005-1029	Em Uso	Bongo c/ Baú	JOAO DE SENA MELO FILHO	006159	28/01/2025  01:17
+GDL2A52	GOL	2023	BASE VILA GUILHERME	101005-1029	Em Uso	Bongo c/ Baú	DISCOVERY TELECOM - VIVO	101373	31/03/2026  15:08
+GIQ9E53	GOL	2023	BASE VILA GUILHERME	101007-1019	Em Uso	Bongo c/ Baú	MAURICIO VIEIRA ALVES	020142	08/02/2024  09:14
+GIN7I41	MOVIDA	2024	BASE VILA GUILHERME	101005-1029	Em Uso	S-10 c/ Capota	SOLON ROCHA	030053	09/02/2026  10:26
+SKL9A50	LM TRANSPORTES	2025	BASE VILA GUILHERME	101005-1029	Em Uso	Bongo c/ Baú	JOTEL - EDMIR	101079	21/01/2025  14:29
+GHJ4A72	GOL	2023	BASE VILA GUILHERME	101005-1029	Em Uso	Bongo c/ Baú	ANTONIO BARBOSA PRATES	035655	21/07/2026  01:55
+SKL9A98	LM TRANSPORTES	2025	BASE VILA GUILHERME	199901-1906	Disponível	Bongo c/ Baú	DISPONIVEL - VG1	P1001VG1	01/09/2026  13:44
+QNH2C59	EMPRESA TERCEIRIZADA	2017	BASE VILA GUILHERME	101005-1029	Em Uso	Hilux	JOTEL - EDMIR	101079	10/05/2023  13:20
+SKL9H10	LM TRANSPORTES	2025	BASE VILA GUILHERME	101005-1029	Em Uso	17.210 c/ Munck 16t	UELINTON SALES DE OLIVEIRA FILHO	026949	04/02/2026  10:59
+GJP6D02	MOVIDA	2024	BASE VILA GUILHERME	101005-1028	Em Uso	S-10 c/ Capota	WILISON DE SALES VIEIRA	043317	30/04/2026  10:29
+SEE3H40	GOL	2023	BASE VILA GUILHERME	101005-1029	Em Uso	Bongo c/ Baú	JOSE FERREIRA DE AMORIM	006182	18/07/2026  01:09
+GDE2G64	GOL	2023	BASE VILA GUILHERME	101017-1710	Em Uso	Bongo c/ Baú	EUGENIO CARLOS DA SILVA	038109	19/08/2026  01:56
+GCY5J81	PARTICULAR	2023	BASE VILA GUILHERME	101006-1101	Em Uso	Ranger	GERSON MARTINS DOS SANTOS	003405	29/06/2023  00:00
+GCR5C84	MOVIDA	2024	BASE VILA GUILHERME	101005-1028	Em Uso	S-10 c/ Capota	DANILO APARECIDO DE SOUZA FRANCO	060551	20/04/2026  15:02
+GBW3F15	GOL	2022	BASE VILA GUILHERME	101005-1029	Em Uso	Bongo c/ Carroceria	M&F ENGENHARIA - VIVO SP	101520	16/09/2025  11:29
+GBT2E64	MOVIDA	2024	BASE VILA GUILHERME	101005-1029	Em Uso	S-10 c/ Capota	WR TELECON	101260	29/04/2026  13:31
+SKL9F42	LM TRANSPORTES	2025	BASE VILA GUILHERME	101005-1029	Em Uso	Bongo c/ Baú	ISRAEL DE SOUZA OLIVEIRA	053003	19/07/2025  04:46
+ICO6708	ICOMON TECNOLOGIA	1990	BASE VILA GUILHERME	101003-1019	Em Uso	Carreta	Administracao	ADM	07/03/2016  11:34
+SSR8A29	MOVIDA	2024	BASE VILA GUILHERME	101005-1029	Em Uso	S-10 c/ Capota	ANDRE SOUZA DE CAMPOS	059352	04/03/2026  11:10
+SKL6H89	LM TRANSPORTES	2025	BASE VILA GUILHERME	101005-1028	Em Uso	Bongo c/ Baú	VANDERLEI APARECIDO PAIXAO	016885	27/11/2025  10:30
+OQO8D35	EMPRESA TERCEIRIZADA	2014	BASE VILA GUILHERME	101005-1029	Em Uso	Ranger	JOTEL - EDMIR	101079	08/05/2024  18:01
+SKL7D21	LM TRANSPORTES	2025	BASE VILA GUILHERME	101005-1029	Em Uso	Bongo c/ Baú	LUXON DENIS	020837	18/08/2026  01:35
+ICO6714	ICOMON TECNOLOGIA	2011	BASE VILA GUILHERME	101005-1029	Em Uso	Carreta	Administracao	ADM	30/11/2017  11:10
+ICO6713	ICOMON TECNOLOGIA	2017	BASE VILA GUILHERME	101004-1019	Em Uso	Carreta	Administracao	ADM	06/09/2017  17:33
+GIR6I05	EMPRESA TERCEIRIZADA	2021	BASE VILA GUILHERME	101005-1029	Em Uso	314 CDI Street	ADRIANO LEAL CABRAL	100956	27/04/2021  00:00
+ICO6709	ICOMON TECNOLOGIA	2015	BASE VILA GUILHERME	101002-1019	Em Uso	Carreta	Administracao	ADM	16/06/2016  14:09
+SKL8D31	LM TRANSPORTES	2025	BASE VILA GUILHERME	101005-1029	Em Uso	Bongo c/ Baú	VILLAGE CONNECTION	101643	13/07/2026  16:17
+ICO6705	ICOMON TECNOLOGIA	1990	BASE VILA GUILHERME	101003-1019	Em Uso	Carreta	Administracao	ADM	07/03/2016  11:38
+ICO6704	ICOMON TECNOLOGIA	2000	BASE VILA GUILHERME	101007-1019	Em Uso	Carreta	Administracao	ADM	21/03/2016  10:00
+ICO6703	ICOMON TECNOLOGIA	1990	BASE VILA GUILHERME	101003-1019	Em Uso	Carreta	Administracao	ADM	24/03/2017  22:00
+GVP5A60	EMPRESA TERCEIRIZADA	2011	BASE VILA GUILHERME	101005-1029	Em Uso	Ranger	GUISA SOLUÇÕES - VIVO SP	101262	14/09/2023  09:40
+GJT0J24	MOVIDA	2024	BASE VILA GUILHERME	101005-1029	Em Uso	S-10 c/ Capota	SERGIO SOUZA DA SILVA	059846	01/07/2026  14:04
+SKL5H76	LM TRANSPORTES	2025	BASE VILA GUILHERME	101005-1028	Em Uso	Bongo c/ Baú	ROBERTO LOPES DO CARMO	043232	23/03/2026  11:12
+ICO6712	ICOMON TECNOLOGIA	1991	BASE VILA GUILHERME	101003-1019	Em Uso	Carreta	Administracao	ADM	13/07/2017  10:00`;
+
+    // Processamento da base em array de objetos JavaScript
+    const VEICULOS_DATA = RAW_DATA_TSV.trim().split('\n').map(line => {
+      const p = line.split('\t');
+      return {
+        placa: p[0]?.trim(),
+        proprietario: p[1]?.trim(),
+        mod: p[2]?.trim(),
+        departamento: p[3]?.trim(),
+        centroCusto: p[4]?.trim(),
+        status: p[5]?.trim(),
+        modelo: p[6]?.trim(),
+        condutor: p[7]?.trim(),
+        re: p[8]?.trim()
+      };
+    }).filter(v => v.placa);
+
+    // Estado da Aplicação
+    let currentStep = 1;
+    let selectedVehicle = null;
+    let resultadoFinal = "";
+    let foto1Base64 = null;
+    let foto2Base64 = null;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      popularDatalistPlacas();
+      initSignatureCanvas();
+      definirDataHoraPadrao();
+    });
+
+    function definirDataHoraPadrao() {
+      const hoje = new Date();
+      const ano = hoje.getFullYear();
+      const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+      const dia = String(hoje.getDate()).padStart(2, '0');
+      const horas = String(hoje.getHours()).padStart(2, '0');
+      const minutos = String(hoje.getMinutes()).padStart(2, '0');
+
+      document.getElementById('ensaioData').value = `${ano}-${mes}-${dia}`;
+      document.getElementById('ensaioHora').value = `${horas}:${minutos}`;
+    }
+
+    function popularDatalistPlacas() {
+      const datalist = document.getElementById('placasDatalist');
+      datalist.innerHTML = '';
+      VEICULOS_DATA.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v.placa;
+        opt.textContent = `${v.placa} - ${v.modelo} (${v.departamento})`;
+        datalist.appendChild(opt);
+      });
+    }
+
+    function selectTipoEquipamento(tipo) {
+      document.getElementById('tipoEquipamento').value = tipo;
+      document.getElementById('card-tipo-veiculo').classList.toggle('selected', tipo === 'Veículo à Diesel');
+      document.getElementById('card-tipo-gerador').classList.toggle('selected', tipo === 'Grupo Motor Gerador');
+      document.getElementById('tipoEquipamentoError').style.setProperty('display', 'none', 'important');
+
+      if (document.getElementById('ensaioDensidade').value) {
+        calcularResultado();
+      }
+    }
+
+    function onPlacaSelected(valor) {
+      const placaLimpa = valor.trim().toUpperCase();
+      const veiculo = VEICULOS_DATA.find(v => v.placa.toUpperCase() === placaLimpa);
+      const container = document.getElementById('vehicleInfoContainer');
+      const noSelect = document.getElementById('noVehicleSelectedMsg');
+      const input = document.getElementById('placaSearchInput');
+
+      if (veiculo) {
+        selectedVehicle = veiculo;
+        input.classList.remove('is-invalid');
+
+        document.getElementById('vBadgePlaca').textContent = veiculo.placa;
+        document.getElementById('vBadgeStatus').textContent = veiculo.status;
+        document.getElementById('vInfoModelo').textContent = veiculo.modelo;
+        document.getElementById('vInfoMod').textContent = veiculo.mod;
+        document.getElementById('vInfoProprietario').textContent = veiculo.proprietario;
+        document.getElementById('vInfoDepartamento').textContent = veiculo.departamento;
+        document.getElementById('vInfoCentroCusto').textContent = veiculo.centroCusto;
+        document.getElementById('vInfoCondutor').textContent = veiculo.condutor;
+        document.getElementById('vInfoRE').textContent = veiculo.re;
+
+        container.style.display = 'block';
+        noSelect.style.display = 'none';
+      } else {
+        selectedVehicle = null;
+        container.style.display = 'none';
+        noSelect.style.display = 'block';
+      }
+    }
+
+    function clearVehicleData() {
+      document.getElementById('placaSearchInput').value = '';
+      selectedVehicle = null;
+      document.getElementById('vehicleInfoContainer').style.display = 'none';
+      document.getElementById('noVehicleSelectedMsg').style.display = 'block';
+      document.getElementById('placaSearchInput').classList.remove('is-invalid');
+    }
+
+    function calcularResultado() {
+      const tipo = document.getElementById('tipoEquipamento').value;
+      const densidade = document.getElementById('ensaioDensidade').value;
+      const resultBox = document.getElementById('liveResultBox');
+      const banner = document.getElementById('liveResultBanner');
+      const icon = document.getElementById('liveResultIcon');
+      const text = document.getElementById('liveResultText');
+
+      if (!tipo || !densidade) {
+        resultBox.style.display = 'none';
+        resultadoFinal = "";
+        return;
+      }
+
+      let conforme = false;
+      if (tipo === 'Veículo à Diesel') {
+        conforme = (densidade === 'Padrão 1' || densidade === 'Padrão 2');
+      } else if (tipo === 'Grupo Motor Gerador') {
+        conforme = (densidade === 'Padrão 1');
+      }
+
+      resultBox.style.display = 'block';
+
+      if (conforme) {
+        resultadoFinal = "CONFORME";
+        banner.className = "result-banner result-conforme";
+        icon.className = "bi bi-check-circle-fill text-success fs-4";
+        text.textContent = "RESULTADO: CONFORME (DENTRO DO LIMITE PERMITIDO)";
+      } else {
+        resultadoFinal = "NÃO CONFORME";
+        banner.className = "result-banner result-nao-conforme";
+        icon.className = "bi bi-exclamation-triangle-fill text-danger fs-4";
+        text.textContent = "RESULTADO: NÃO CONFORME (EXCEDE O LIMITE PERMITIDO)";
+      }
+    }
+
+    function getActiveStepElementId(stepNum) {
+      if (stepNum === 1) return 'step-1';
+      if (stepNum === 2) {
+        const tipo = document.getElementById('tipoEquipamento').value;
+        return (tipo === 'Veículo à Diesel') ? 'step-2A' : 'step-2B';
+      }
+      if (stepNum === 3) return 'step-3';
+      if (stepNum === 4) {
+        return (resultadoFinal === 'CONFORME') ? 'step-4A' : 'step-4B';
+      }
+      if (stepNum === 5) return 'step-5';
+      if (stepNum === 6) return 'step-6';
+      if (stepNum === 7) return 'step-7';
+      return 'step-1';
+    }
+
+    function updateWizardUI() {
+      const allSteps = document.querySelectorAll('.form-step');
+      allSteps.forEach(el => el.classList.remove('active'));
+
+      const activeId = getActiveStepElementId(currentStep);
+      const targetEl = document.getElementById(activeId);
+      if (targetEl) targetEl.classList.add('active');
+
+      const stepItems = document.querySelectorAll('.step-item');
+      stepItems.forEach(item => {
+        const s = parseInt(item.getAttribute('data-step'), 10);
+        item.classList.remove('active', 'completed');
+        if (s < currentStep) item.classList.add('completed');
+        else if (s === currentStep) item.classList.add('active');
+      });
+
+      const btnVoltar = document.getElementById('btnVoltar');
+      const btnAvancar = document.getElementById('btnAvancar');
+      const btnImprimir = document.getElementById('btnImprimir');
+      const btnGerarPDF = document.getElementById('btnGerarPDF');
+
+      btnVoltar.style.display = (currentStep === 1) ? 'none' : 'inline-block';
+
+      if (currentStep === 7) {
+        btnAvancar.style.display = 'none';
+        btnImprimir.style.display = 'inline-block';
+        btnGerarPDF.style.display = 'inline-block';
+      } else {
+        btnAvancar.style.display = 'inline-block';
+        btnImprimir.style.display = 'none';
+        btnGerarPDF.style.display = 'none';
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function validateCurrentStep() {
+      let isValid = true;
+
+      if (currentStep === 1) {
+        const tipo = document.getElementById('tipoEquipamento').value;
+        const err = document.getElementById('tipoEquipamentoError');
+        if (!tipo) {
+          err.style.setProperty('display', 'block', 'important');
+          isValid = false;
+        } else {
+          err.style.setProperty('display', 'none', 'important');
+        }
+      }
+
+      else if (currentStep === 2) {
+        const tipo = document.getElementById('tipoEquipamento').value;
+        if (tipo === 'Veículo à Diesel') {
+          const input = document.getElementById('placaSearchInput');
+          if (!selectedVehicle) {
+            input.classList.add('is-invalid');
+            isValid = false;
+          } else {
+            input.classList.remove('is-invalid');
+          }
+        } else {
+          const requiredIds = ['geradorLocal', 'geradorSetor', 'geradorFabricante', 'geradorModelo', 'geradorSerie', 'geradorPotencia', 'geradorDataFab'];
+          requiredIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el.value.trim()) {
+              el.classList.add('is-invalid');
+              isValid = false;
+            } else {
+              el.classList.remove('is-invalid');
+            }
+          });
+        }
+      }
+
+      else if (currentStep === 3) {
+        const fields = ['ensaioData', 'ensaioHora', 'ensaioDistancia', 'ensaioOperacaoNormal', 'ensaioDensidade'];
+        fields.forEach(id => {
+          const el = document.getElementById(id);
+          if (!el.value.trim()) {
+            el.classList.add('is-invalid');
+            isValid = false;
+          } else {
+            el.classList.remove('is-invalid');
+          }
+        });
+        if (isValid) calcularResultado();
+      }
+
+      else if (currentStep === 4) {
+        if (resultadoFinal === 'NÃO CONFORME') {
+          const ncFields = ['ncDescricao', 'ncAcaoCorretiva', 'ncResponsavel', 'ncPrazo'];
+          ncFields.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el.value.trim()) {
+              el.classList.add('is-invalid');
+              isValid = false;
+            } else {
+              el.classList.remove('is-invalid');
+            }
+          });
+        }
+      }
+
+      else if (currentStep === 7) {
+        const respFields = ['respNome', 'respRE'];
+        respFields.forEach(id => {
+          const el = document.getElementById(id);
+          if (!el.value.trim()) {
+            el.classList.add('is-invalid');
+            isValid = false;
+          } else {
+            el.classList.remove('is-invalid');
+          }
+        });
+
+        const sigErr = document.getElementById('sigError');
+        if (isCanvasBlank()) {
+          sigErr.style.setProperty('display', 'block', 'important');
+          isValid = false;
+        } else {
+          sigErr.style.setProperty('display', 'none', 'important');
+        }
+      }
+
+      return isValid;
+    }
+
+    function nextStep() {
+      if (!validateCurrentStep()) return;
+      if (currentStep < 7) {
+        currentStep++;
+        updateWizardUI();
+      }
+    }
+
+    function prevStep() {
+      if (currentStep > 1) {
+        currentStep--;
+        updateWizardUI();
+      }
+    }
+
+    function resetFormConfirmation() {
+      if (confirm("Deseja realmente limpar todos os dados do formulário atual?")) {
+        document.getElementById('inspectionForm').reset();
+        selectedVehicle = null;
+        resultadoFinal = "";
+        foto1Base64 = null;
+        foto2Base64 = null;
+        
+        document.getElementById('tipoEquipamento').value = "";
+        document.getElementById('card-tipo-veiculo').classList.remove('selected');
+        document.getElementById('card-tipo-gerador').classList.remove('selected');
+        clearVehicleData();
+        clearSignature();
+
+        removePhoto('inputFoto1', 'previewFoto1', 'boxFoto1', 'iconUpload1', 'textUpload1', 'btnRemoverFoto1');
+        removePhoto('inputFoto2', 'previewFoto2', 'boxFoto2', 'iconUpload2', 'textUpload2', 'btnRemoverFoto2');
+
+        definirDataHoraPadrao();
+        currentStep = 1;
+        updateWizardUI();
+      }
+    }
+
+    /* UPLOAD E FOTOS RETRATO */
+    function handlePhotoUpload(input, imgId, boxId, iconId, textId, btnRemoverId) {
+      const file = input.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const b64 = e.target.result;
+        if (imgId === 'previewFoto1') foto1Base64 = b64;
+        if (imgId === 'previewFoto2') foto2Base64 = b64;
+
+        const imgEl = document.getElementById(imgId);
+        imgEl.src = b64;
+        imgEl.style.display = 'block';
+
+        document.getElementById(iconId).style.display = 'none';
+        document.getElementById(textId).style.display = 'none';
+        document.getElementById(btnRemoverId).style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removePhoto(inputId, imgId, boxId, iconId, textId, btnRemoverId) {
+      document.getElementById(inputId).value = '';
+      const imgEl = document.getElementById(imgId);
+      imgEl.src = '';
+      imgEl.style.display = 'none';
+
+      document.getElementById(iconId).style.display = 'block';
+      document.getElementById(textId).style.display = 'block';
+      document.getElementById(btnRemoverId).style.display = 'none';
+
+      if (imgId === 'previewFoto1') foto1Base64 = null;
+      if (imgId === 'previewFoto2') foto2Base64 = null;
+    }
+
+    /* ASSINATURA CANVAS */
+    let canvas, ctx;
+    let isDrawing = false;
+    let hasDrawn = false;
+
+    function initSignatureCanvas() {
+      canvas = document.getElementById('signaturePad');
+      ctx = canvas.getContext('2d');
+
+      function resize() {
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+        ctx.strokeStyle = "#001B6E";
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+      }
+      resize();
+      window.addEventListener('resize', resize);
+
+      canvas.addEventListener('mousedown', startDrawing);
+      canvas.addEventListener('mousemove', draw);
+      canvas.addEventListener('mouseup', stopDrawing);
+      canvas.addEventListener('mouseleave', stopDrawing);
+
+      canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const rect = canvas.getBoundingClientRect();
+        ctx.beginPath();
+        ctx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
+        isDrawing = true;
+        hasDrawn = true;
+      });
+
+      canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (!isDrawing) return;
+        const touch = e.touches[0];
+        const rect = canvas.getBoundingClientRect();
+        ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
+        ctx.stroke();
+      });
+
+      canvas.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        isDrawing = false;
+      });
+    }
+
+    function startDrawing(e) {
+      isDrawing = true;
+      hasDrawn = true;
+      const rect = canvas.getBoundingClientRect();
+      ctx.beginPath();
+      ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      const rect = canvas.getBoundingClientRect();
+      ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+      ctx.stroke();
+    }
+
+    function stopDrawing() { isDrawing = false; }
+
+    function clearSignature() {
+      if (ctx && canvas) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        hasDrawn = false;
+      }
+    }
+
+    function isCanvasBlank() { return !hasDrawn; }
+
+    /* SINCRONIZAÇÃO DE DADOS PARA PDF */
+    function syncPdfData() {
+      const tipo = document.getElementById('tipoEquipamento').value;
+      const checkV = document.getElementById('pdfCheckVeiculo');
+      const checkG = document.getElementById('pdfCheckGerador');
+      const blocoV = document.getElementById('pdfBlocoVeiculo');
+      const blocoG = document.getElementById('pdfBlocoGerador');
+
+      if (tipo === 'Veículo à Diesel') {
+        checkV.innerHTML = '<strong>( X ) Veículos à Diesel</strong>';
+        checkG.innerHTML = '( &nbsp; ) Grupos Motores Geradores';
+        blocoV.style.display = 'block';
+        blocoG.style.display = 'none';
+
+        if (selectedVehicle) {
+          // Local/Base agora exibe o departamento real correto
+          document.getElementById('pdfVBase').textContent = selectedVehicle.departamento || '-';
+          document.getElementById('pdfVPlaca').textContent = selectedVehicle.placa || '-';
+          document.getElementById('pdfVMod').textContent = selectedVehicle.mod || '-';
+          document.getElementById('pdfVModelo').textContent = selectedVehicle.modelo || '-';
+          document.getElementById('pdfVCondutor').textContent = selectedVehicle.condutor || '-';
+          document.getElementById('pdfVRE').textContent = selectedVehicle.re || '-';
+          document.getElementById('pdfVProprietario').textContent = selectedVehicle.proprietario || '-';
+          document.getElementById('pdfVCentroCusto').textContent = selectedVehicle.centroCusto || '-';
+        }
+      } else {
+        checkV.innerHTML = '( &nbsp; ) Veículos à Diesel';
+        checkG.innerHTML = '<strong>( X ) Grupos Motores Geradores</strong>';
+        blocoV.style.display = 'none';
+        blocoG.style.display = 'block';
+
+        document.getElementById('pdfGLocal').textContent = document.getElementById('geradorLocal').value || '-';
+        document.getElementById('pdfGSetor').textContent = document.getElementById('geradorSetor').value || '-';
+        document.getElementById('pdfGFabModelo').textContent = `${document.getElementById('geradorFabricante').value} / ${document.getElementById('geradorModelo').value}`;
+        document.getElementById('pdfGSerie').textContent = document.getElementById('geradorSerie').value || '-';
+        document.getElementById('pdfGPotencia').textContent = document.getElementById('geradorPotencia').value || '-';
+        
+        const dataFabVal = document.getElementById('geradorDataFab').value;
+        document.getElementById('pdfGDataFab').textContent = dataFabVal ? formatarData(dataFabVal) : '-';
+      }
+
+      // Ensaio
+      const dt = document.getElementById('ensaioData').value;
+      document.getElementById('pdfEnsaioData').textContent = dt ? formatarData(dt) : '__/__/____';
+      document.getElementById('pdfEnsaioHora').textContent = document.getElementById('ensaioHora').value || '__:__';
+      document.getElementById('pdfEnsaioDistancia').textContent = `${document.getElementById('ensaioDistancia').value || '-'} metros`;
+      document.getElementById('pdfEnsaioOpNormal').textContent = document.getElementById('ensaioOperacaoNormal').value || '-';
+      document.getElementById('pdfEnsaioDensidade').textContent = document.getElementById('ensaioDensidade').value || '-';
+
+      // Resultado
+      const resEl = document.getElementById('pdfResultadoStatus');
+      const tratativaBox = document.getElementById('pdfTratativaNCBox');
+      resEl.textContent = resultadoFinal;
+
+      if (resultadoFinal === 'CONFORME') {
+        resEl.style.backgroundColor = '#d1e7dd';
+        resEl.style.color = '#0f5132';
+        tratativaBox.style.display = 'none';
+      } else {
+        resEl.style.backgroundColor = '#f8d7da';
+        resEl.style.color = '#842029';
+        tratativaBox.style.display = 'block';
+
+        document.getElementById('pdfNCAcao').textContent = document.getElementById('ncAcaoCorretiva').value || '-';
+        document.getElementById('pdfNCResp').textContent = document.getElementById('ncResponsavel').value || '-';
+        const pz = document.getElementById('ncPrazo').value;
+        document.getElementById('pdfNCPrazo').textContent = pz ? formatarData(pz) : '-';
+      }
+
+      // Observações
+      const obs = document.getElementById('observacoesGerais').value.trim();
+      document.getElementById('pdfObservacoes').textContent = obs || "Sem observações complementares.";
+
+      // Fotos Verticais
+      const img1 = document.getElementById('pdfImgFoto1');
+      const noImg1 = document.getElementById('pdfNoImg1');
+      if (foto1Base64) {
+        img1.src = foto1Base64;
+        img1.style.display = 'block';
+        noImg1.style.display = 'none';
+      } else {
+        img1.style.display = 'none';
+        noImg1.style.display = 'block';
+      }
+
+      const img2 = document.getElementById('pdfImgFoto2');
+      const noImg2 = document.getElementById('pdfNoImg2');
+      if (foto2Base64) {
+        img2.src = foto2Base64;
+        img2.style.display = 'block';
+        noImg2.style.display = 'none';
+      } else {
+        img2.style.display = 'none';
+        noImg2.style.display = 'block';
+      }
+
+      // Responsável e Assinatura
+      const nomeResp = document.getElementById('respNome').value || 'COLOQUE AQUI O NOME DO RESPONSÁVEL';
+      const reResp = document.getElementById('respRE').value || '------';
+      document.getElementById('pdfRespNomeAssinatura').textContent = nomeResp.toUpperCase();
+      document.getElementById('pdfRespREAssinatura').textContent = reResp;
+
+      const imgAss = document.getElementById('pdfImgAssinatura');
+      if (!isCanvasBlank()) {
+        imgAss.src = canvas.toDataURL('image/png');
+        imgAss.style.display = 'block';
+      } else {
+        imgAss.style.display = 'none';
+      }
+    }
+
+    function formatarData(isoDate) {
+      if (!isoDate) return '';
+      const [ano, mes, dia] = isoDate.split('-');
+      return `${dia}/${mes}/${ano}`;
+    }
+
+    async function gerarPDF() {
+      if (!validateCurrentStep()) return;
+
+      const overlay = document.getElementById('loadingOverlay');
+      overlay.style.display = 'flex';
+
+      syncPdfData();
+
+      const element = document.getElementById('pdfRenderArea');
+      element.style.position = 'static';
+      element.style.left = '0';
+
+      try {
+        const canvasImage = await html2canvas(element, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff'
+        });
+
+        element.style.position = 'absolute';
+        element.style.left = '-9999px';
+
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+
+        const imgData = canvasImage.toDataURL('image/jpeg', 0.95);
+        const imgProps = pdf.getImageProperties(imgData);
+        const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, Math.min(imgHeight, pdfHeight));
+
+        const idDoc = selectedVehicle ? selectedVehicle.placa : 'GERADOR';
+        pdf.save(`F-SGI-50_Fumaca_Preta_${idDoc}_${document.getElementById('ensaioData').value}.pdf`);
+
+      } catch (error) {
+        console.error("Erro ao gerar PDF:", error);
+        alert("Ocorreu um erro ao gerar o arquivo PDF. Tente a opção Imprimir.");
+      } finally {
+        element.style.position = 'absolute';
+        element.style.left = '-9999px';
+        overlay.style.display = 'none';
+      }
+    }
+
+    function imprimirRelatorio() {
+      if (!validateCurrentStep()) return;
+      syncPdfData();
+
+      const elemento = document.getElementById('pdfRenderArea');
+      const janelaPrint = window.open('', '', 'width=900,height=800');
+      janelaPrint.document.write(`
+        <html>
+          <head>
+            <title>Imprimir Relatório F-SGI-50 - ICOMON</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 15px; font-size: 11px; }
+              table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+              th, td { border: 1px solid #222; padding: 4px 6px; vertical-align: middle; }
+              .header-table th { background: #f0f0f0; text-align: center; }
+              .table-section-title { background: #001B6E; color: #fff; font-weight: bold; padding: 4px 6px; }
+              .pdf-photo-box { height: 200px; display: flex; align-items: center; justify-content: center; border: 1px dashed #aaa; background: #fafafa; }
+              .pdf-photo-box img { max-height: 195px; max-width: 100%; object-fit: contain; }
+            </style>
+          </head>
+          <body>
+            ${elemento.innerHTML}
+          </body>
+        </html>
+      `);
+      janelaPrint.document.close();
+      janelaPrint.focus();
+      setTimeout(() => {
+        janelaPrint.print();
+        janelaPrint.close();
+      }, 500);
+    }
+  </script>
+</body>
+</html>
